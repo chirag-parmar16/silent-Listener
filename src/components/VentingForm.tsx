@@ -77,6 +77,27 @@ const VentingForm: React.FC<VentingFormProps> = ({ target, onSubmit, onReset }) 
     };
   }, []);
 
+  const saveVentToHistory = (ventText: string, mode: string) => {
+    try {
+      const newVent = {
+        id: Date.now().toString(),
+        text: ventText,
+        target,
+        mode,
+        timestamp: Date.now()
+      };
+
+      const existingVents = sessionStorage.getItem('ventHistory');
+      let ventHistory = existingVents ? JSON.parse(existingVents) : [];
+      
+      ventHistory = [newVent, ...ventHistory];
+      
+      sessionStorage.setItem('ventHistory', JSON.stringify(ventHistory));
+    } catch (error) {
+      console.error('Error saving vent to history:', error);
+    }
+  };
+
   const handleVentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (ventText.trim()) {
@@ -84,6 +105,8 @@ const VentingForm: React.FC<VentingFormProps> = ({ target, onSubmit, onReset }) 
       if (isRecording) {
         stopRecording();
       }
+      
+      saveVentToHistory(ventText, mode);
       
       setTimeout(() => {
         onSubmit(ventText, mode);
