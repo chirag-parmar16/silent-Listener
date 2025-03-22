@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Send, Trash2, Volume2, VolumeX, RefreshCw } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 
@@ -16,6 +15,9 @@ const VentingForm: React.FC<VentingFormProps> = ({ target, onSubmit, onReset }) 
   const [isRecording, setIsRecording] = useState(false);
   const [charactersLeft, setCharactersLeft] = useState(2000);
   const { toast } = useToast();
+  
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const isRecognitionSupportedRef = useRef<boolean>(false);
 
   const MAX_CHARS = 2000;
 
@@ -23,11 +25,66 @@ const VentingForm: React.FC<VentingFormProps> = ({ target, onSubmit, onReset }) 
     setCharactersLeft(MAX_CHARS - ventText.length);
   }, [ventText]);
 
+  useEffect(() => {
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+      isRecognitionSupportedRef.current = true;
+      
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      
+      recognitionRef.current.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript + ' ';
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        
+        if (finalTranscript) {
+          setVentText((prev) => {
+            const newText = prev + finalTranscript;
+            return newText.substring(0, MAX_CHARS);
+          });
+        }
+      };
+      
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error', event.error);
+        if (isRecording) {
+          stopRecording();
+          toast({
+            title: "Voice recording error",
+            description: `Error: ${event.error}. Please try again.`,
+            variant: "destructive",
+          });
+        }
+      };
+    }
+    
+    return () => {
+      if (recognitionRef.current && isRecording) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
+
   const handleVentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (ventText.trim()) {
       setIsSubmitting(true);
-      // Simulate API call delay
+      if (isRecording) {
+        stopRecording();
+      }
+      
       setTimeout(() => {
         onSubmit(ventText, mode);
         setIsSubmitting(false);
@@ -41,22 +98,55 @@ const VentingForm: React.FC<VentingFormProps> = ({ target, onSubmit, onReset }) 
     }
   };
 
+  const startRecording = () => {
+    if (!isRecognitionSupportedRef.current) {
+      toast({
+        title: "Speech recognition not supported",
+        description: "Your browser doesn't support voice recording. Try using Chrome or Edge.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.start();
+        setIsRecording(true);
+        toast({
+          title: "Voice recording started",
+          description: "Speak clearly to vent your feelings.",
+        });
+      } catch (error) {
+        console.error('Error starting speech recognition:', error);
+        toast({
+          title: "Error starting voice recording",
+          description: "Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const stopRecording = () => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+        setIsRecording(false);
+        toast({
+          title: "Voice recording stopped",
+          description: "Your spoken words have been converted to text.",
+        });
+      } catch (error) {
+        console.error('Error stopping speech recognition:', error);
+      }
+    }
+  };
+
   const toggleRecording = () => {
-    // In a real implementation, this would use the Web Speech API
     if (isRecording) {
-      setIsRecording(false);
-      toast({
-        title: "Voice recording stopped",
-        description: "Your spoken words have been converted to text.",
-      });
-      // Simulating voice-to-text result
-      setVentText(ventText + " [Voice recording converted to text would appear here]");
+      stopRecording();
     } else {
-      setIsRecording(true);
-      toast({
-        title: "Voice recording started",
-        description: "Speak clearly to vent your feelings.",
-      });
+      startRecording();
     }
   };
 
@@ -213,3 +303,10 @@ const VentingForm: React.FC<VentingFormProps> = ({ target, onSubmit, onReset }) 
 };
 
 export default VentingForm;
+
+declare global {
+  interface Window {
+    SpeechRecognition: typeof SpeechRecognition;
+    webkitSpeechRecognition: typeof SpeechRecognition;
+  }
+}
