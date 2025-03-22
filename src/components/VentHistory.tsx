@@ -24,6 +24,7 @@ const VentHistory: React.FC = () => {
     const loadVentHistory = () => {
       try {
         const storedVents = sessionStorage.getItem('ventHistory');
+        console.log('Loaded vents from sessionStorage:', storedVents);
         if (storedVents) {
           setVentHistory(JSON.parse(storedVents));
         }
