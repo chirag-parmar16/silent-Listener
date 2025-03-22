@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { MessageCircle, User, Clock, ThumbsUp, Share2, RefreshCw } from 'lucide-react';
+import { generateAIResponses } from '@/utils/aiResponseGenerator';
 
 interface SilentListenerProps {
   ventText: string;
@@ -23,54 +23,14 @@ const SilentListener: React.FC<SilentListenerProps> = ({
   const [typingIndex, setTypingIndex] = useState(0);
   const [responseIndex, setResponseIndex] = useState(0);
   
-  // Generate responses based on vent and mode
+  // Generate AI-powered responses based on vent text, target, and mode
   useEffect(() => {
-    const generateResponses = () => {
-      const targetNormalized = target.toLowerCase();
-      let generatedResponses: string[] = [];
-      
-      // This is a simplified implementation - in a real app you would use an API or more complex logic
-      switch (mode) {
-        case 'sympathy':
-          generatedResponses = [
-            `I understand how difficult your situation with ${targetNormalized} must be. It's completely normal to feel this way.`,
-            "You're not alone in these feelings. Many people go through similar experiences.",
-            "I hear you. Your feelings are valid, and it's okay to express them.",
-            "Thank you for sharing this. It takes courage to express these emotions."
-          ];
-          break;
-        case 'justification':
-          generatedResponses = [
-            `You have every right to feel this way about ${targetNormalized}. Your reaction makes sense.`,
-            "Anyone in your position would likely feel the same way.",
-            "Your perspective is completely justified given what you've experienced.",
-            "These emotions are a natural response to your situation."
-          ];
-          break;
-        case 'argument':
-          generatedResponses = [
-            `Have you considered looking at the situation with ${targetNormalized} from a different angle?`,
-            "Sometimes challenging our initial reactions can lead to new insights.",
-            "It might be worth exploring alternative interpretations of this situation.",
-            "What would happen if you approached this from a different perspective?"
-          ];
-          break;
-        default:
-          generatedResponses = [
-            "I'm here to listen. Please continue sharing your thoughts.",
-            "Thank you for expressing yourself. Your feelings matter.",
-            "I appreciate your honesty and openness.",
-            "I'm listening attentively to everything you're saying."
-          ];
-      }
-      
-      return generatedResponses;
-    };
-    
-    setResponses(generateResponses());
+    // Use our AI response generator for more sophisticated responses
+    const aiResponses = generateAIResponses({ ventText, target, mode });
+    setResponses(aiResponses);
   }, [ventText, target, mode]);
   
-  // Simulate typing effect
+  // Simulate typing effect - keep existing code for the typing effect animation
   useEffect(() => {
     if (responses.length === 0) return;
     
@@ -85,7 +45,7 @@ const SilentListener: React.FC<SilentListenerProps> = ({
         
         return () => clearTimeout(typingTimer);
       } else {
-        // Move to next response after delay
+        // Move to next response after delay - longer delay for more natural conversation pacing
         const nextResponseTimer = setTimeout(() => {
           setResponseIndex(responseIndex + 1);
           setTypingIndex(0);
@@ -98,10 +58,10 @@ const SilentListener: React.FC<SilentListenerProps> = ({
       // All responses completed
       setIsTyping(false);
       
-      // Move to motivation screen after a delay
+      // Move to motivation screen after a slightly longer delay for better UX
       const completeTimer = setTimeout(() => {
         onComplete();
-      }, 2000);
+      }, 3000);
       
       return () => clearTimeout(completeTimer);
     }
