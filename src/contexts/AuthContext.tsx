@@ -34,6 +34,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             title: "Welcome back!",
             description: "You've successfully signed in.",
           });
+          
+          // Update visit count when user signs in
+          if (session?.user) {
+            updateVisitCount();
+          }
         } else if (event === 'SIGNED_OUT') {
           toast({
             title: "Signed out",
@@ -47,11 +52,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // Update visit count for existing session
+      if (session?.user) {
+        updateVisitCount();
+      }
+      
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, [toast]);
+
+  const updateVisitCount = async () => {
+    try {
+      const { error } = await supabase.rpc('update_visit_count');
+      if (error) {
+        console.error('Error updating visit count:', error);
+      }
+    } catch (error) {
+      console.error('Exception updating visit count:', error);
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
