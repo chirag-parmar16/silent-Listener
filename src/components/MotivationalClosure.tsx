@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Save, Share2, Heart, RefreshCw } from 'lucide-react';
+import { Save, Share2, Heart, RefreshCw, Volume2, VolumeX } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 
 interface MotivationalClosureProps {
@@ -12,6 +12,7 @@ interface MotivationalClosureProps {
 const MotivationalClosure: React.FC<MotivationalClosureProps> = ({ target, ventText, onReset }) => {
   const [motivationalMessage, setMotivationalMessage] = useState('');
   const [showSaved, setShowSaved] = useState(false);
+  const [isSpeechEnabled, setIsSpeechEnabled] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -56,6 +57,60 @@ const MotivationalClosure: React.FC<MotivationalClosureProps> = ({ target, ventT
     const messageIndex = determineMessageIndex();
     setMotivationalMessage(messages[messageIndex]);
   }, [ventText]);
+
+  // Function to speak the motivational message
+  const speakMessage = (text: string) => {
+    if (!isSpeechEnabled) return;
+    
+    if ('speechSynthesis' in window) {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      // Set a voice that's likely available (this will be the browser's default otherwise)
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        // Try to find a female voice for better empathy (fallback to any available voice)
+        const femaleVoice = voices.find(voice => voice.name.includes('female') || voice.name.includes('Female'));
+        if (femaleVoice) {
+          utterance.voice = femaleVoice;
+        }
+      }
+      
+      // Customize voice settings for more inspirational tone
+      utterance.rate = 0.9; // Slightly slower for clarity
+      utterance.pitch = 1.0; // Normal pitch for inspirational tone
+      utterance.volume = 1.0; // Full volume
+      
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+  
+  // Toggle speech feature
+  const toggleSpeech = () => {
+    setIsSpeechEnabled(!isSpeechEnabled);
+    
+    if (!isSpeechEnabled) {
+      toast({
+        title: "Text-to-Speech enabled",
+        description: "The motivational message will now be spoken aloud",
+      });
+      
+      // Speak the current motivational message
+      speakMessage(motivationalMessage);
+    } else {
+      // Cancel any ongoing speech
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      
+      toast({
+        title: "Text-to-Speech disabled",
+        description: "The message will no longer be spoken",
+      });
+    }
+  };
   
   const handleSave = () => {
     // In a real app, you would save to localStorage or a database
@@ -69,26 +124,23 @@ const MotivationalClosure: React.FC<MotivationalClosureProps> = ({ target, ventT
   };
   
   const handleShare = () => {
-    // In a real app, you would implement sharing functionality
-    toast({
-      title: "Share feature",
-      description: "You can share this motivational message with others.",
-    });
+    // Fixed sharing functionality to include the actual quote text
+    const shareText = `"${motivationalMessage}" - Silent Listener App`;
     
     if (navigator.share) {
       navigator.share({
-        title: 'Motivational Message from Silent Vent',
-        text: motivationalMessage,
+        title: 'Motivational Message from Silent Listener',
+        text: shareText,
         url: window.location.href,
       })
       .catch((error) => console.log('Error sharing:', error));
     } else {
       // Fallback for browsers that don't support navigator.share
-      navigator.clipboard.writeText(motivationalMessage)
+      navigator.clipboard.writeText(shareText)
         .then(() => {
           toast({
             title: "Copied to clipboard",
-            description: "You can now paste and share this message.",
+            description: "You can now paste and share this motivational message.",
           });
         })
         .catch(err => {
@@ -131,6 +183,16 @@ const MotivationalClosure: React.FC<MotivationalClosureProps> = ({ target, ventT
             aria-label="Share motivational message"
           >
             <Share2 size={20} />
+          </button>
+          
+          <button 
+            onClick={toggleSpeech}
+            className={`glass-card p-3 rounded-full transition-all ${
+              isSpeechEnabled ? 'text-primary' : 'text-muted-foreground hover:text-primary'
+            }`}
+            aria-label={isSpeechEnabled ? "Disable voice" : "Enable voice"}
+          >
+            {isSpeechEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
           </button>
           
           <button 

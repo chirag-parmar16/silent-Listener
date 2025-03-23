@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, User, Clock, ThumbsUp, Share2, RefreshCw, Send } from 'lucide-react';
+import { MessageCircle, User, Clock, ThumbsUp, Share2, RefreshCw, Send, Volume2, VolumeX } from 'lucide-react';
 import { generateAIResponses } from '@/utils/aiResponseGenerator';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface SilentListenerProps {
   ventText: string;
@@ -33,15 +34,23 @@ const SilentListener: React.FC<SilentListenerProps> = ({
   const [typingIndex, setTypingIndex] = useState(0);
   const [responseIndex, setResponseIndex] = useState(0);
   const [currentAIResponses, setCurrentAIResponses] = useState<string[]>([]);
+  const [isSpeechEnabled, setIsSpeechEnabled] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // Scroll to bottom whenever messages change
+  // Improved scroll to bottom with smooth behavior
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
   };
   
+  // Enhanced effect for scrolling - will run on all message changes and current response changes
   useEffect(() => {
-    scrollToBottom();
+    const scrollTimer = setTimeout(() => {
+      scrollToBottom();
+    }, 50); // Small delay to ensure DOM has updated
+    
+    return () => clearTimeout(scrollTimer);
   }, [messages, currentResponse]);
   
   // Initialize conversation with the initial vent
@@ -102,6 +111,65 @@ const SilentListener: React.FC<SilentListenerProps> = ({
     }
   };
   
+  // Handle speaking the message using Text-to-Speech
+  const speakMessage = (text: string) => {
+    if (!isSpeechEnabled) return;
+    
+    if ('speechSynthesis' in window) {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      // Set a voice that's likely available (this will be the browser's default otherwise)
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        // Try to find a female voice for better empathy (fallback to any available voice)
+        const femaleVoice = voices.find(voice => voice.name.includes('female') || voice.name.includes('Female'));
+        if (femaleVoice) {
+          utterance.voice = femaleVoice;
+        }
+      }
+      
+      // Customize voice settings for better empathy
+      utterance.rate = 0.9; // Slightly slower for a more empathetic tone
+      utterance.pitch = 1.1; // Slightly higher pitch
+      utterance.volume = 1.0; // Full volume
+      
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+  
+  // Toggle speech feature
+  const toggleSpeech = () => {
+    setIsSpeechEnabled(!isSpeechEnabled);
+    
+    if (!isSpeechEnabled) {
+      toast({
+        title: "Text-to-Speech enabled",
+        description: "AI responses will now be spoken aloud",
+      });
+      
+      // If we have a current response, speak it
+      if (messages.length > 0) {
+        const lastAIMessage = [...messages].reverse().find(m => m.sender === 'ai');
+        if (lastAIMessage) {
+          speakMessage(lastAIMessage.text);
+        }
+      }
+    } else {
+      // Cancel any ongoing speech
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      
+      toast({
+        title: "Text-to-Speech disabled",
+        description: "AI responses will no longer be spoken",
+      });
+    }
+  };
+  
   // Handle user sending a new message
   const handleSendMessage = () => {
     if (!currentInput.trim()) return;
@@ -150,6 +218,11 @@ const SilentListener: React.FC<SilentListenerProps> = ({
         
         setMessages(prev => [...prev, newMessage]);
         
+        // Speak the message if speech is enabled
+        if (isSpeechEnabled) {
+          speakMessage(fullResponse);
+        }
+        
         // Move to next response after delay
         const nextResponseTimer = setTimeout(() => {
           setResponseIndex(responseIndex + 1);
@@ -162,7 +235,7 @@ const SilentListener: React.FC<SilentListenerProps> = ({
       // All responses completed
       setIsTyping(false);
     }
-  }, [currentAIResponses, responseIndex, typingIndex]);
+  }, [currentAIResponses, responseIndex, typingIndex, isSpeechEnabled]);
   
   // Handle key press (Enter to send)
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -173,63 +246,76 @@ const SilentListener: React.FC<SilentListenerProps> = ({
   
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h2 className="text-xl font-medium">Silent Listener</h2>
-        <p className="text-muted-foreground mt-1">
-          {isTyping 
-            ? "The listener is reflecting on your words..." 
-            : "What else would you like to share?"
-          }
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-xl font-medium">Silent Listener</h2>
+          <p className="text-muted-foreground mt-1">
+            {isTyping 
+              ? "The listener is reflecting on your words..." 
+              : "What else would you like to share?"
+            }
+          </p>
+        </div>
+        <button
+          onClick={toggleSpeech}
+          className={`p-2 rounded-full transition-all ${
+            isSpeechEnabled ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+          }`}
+          title={isSpeechEnabled ? "Disable voice" : "Enable voice"}
+        >
+          {isSpeechEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+        </button>
       </div>
       
-      <div className="flex flex-col space-y-6 max-h-[60vh] overflow-y-auto p-2">
-        {/* Messages history */}
-        {messages.map((message, idx) => (
-          <div 
-            key={idx} 
-            className={`flex items-start gap-3 ${message.sender === 'user' ? 'self-end max-w-[80%]' : 'self-start max-w-[80%]'} animate-slide-up`}
-          >
-            {message.sender === 'ai' && (
+      <ScrollArea className="h-[50vh] pr-4">
+        <div className="flex flex-col space-y-6 pb-4">
+          {/* Messages history */}
+          {messages.map((message, idx) => (
+            <div 
+              key={idx} 
+              className={`flex items-start gap-3 ${message.sender === 'user' ? 'self-end max-w-[80%]' : 'self-start max-w-[80%]'} animate-slide-up`}
+            >
+              {message.sender === 'ai' && (
+                <div className="bg-primary/10 h-10 w-10 rounded-full flex items-center justify-center">
+                  <MessageCircle size={18} className="text-primary" />
+                </div>
+              )}
+              
+              <div className={`glass-card p-4 ${message.sender === 'user' 
+                ? 'rounded-tl-xl rounded-tr-xl rounded-bl-xl' 
+                : 'rounded-tr-xl rounded-bl-xl rounded-br-xl'}`}
+              >
+                <p className="text-foreground">{message.text}</p>
+                <div className="mt-2 flex items-center justify-end gap-2 text-xs text-muted-foreground">
+                  <Clock size={12} />
+                  <span>
+                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              </div>
+              
+              {message.sender === 'user' && (
+                <div className="bg-accent/50 h-10 w-10 rounded-full flex items-center justify-center">
+                  <User size={18} className="text-accent-foreground" />
+                </div>
+              )}
+            </div>
+          ))}
+          
+          {/* Currently typing message */}
+          {isTyping && currentResponse && (
+            <div className="flex items-start gap-3 self-start max-w-[80%] animate-slide-up">
               <div className="bg-primary/10 h-10 w-10 rounded-full flex items-center justify-center">
                 <MessageCircle size={18} className="text-primary" />
               </div>
-            )}
-            
-            <div className={`glass-card p-4 ${message.sender === 'user' 
-              ? 'rounded-tl-xl rounded-tr-xl rounded-bl-xl' 
-              : 'rounded-tr-xl rounded-bl-xl rounded-br-xl'}`}
-            >
-              <p className="text-foreground">{message.text}</p>
-              <div className="mt-2 flex items-center justify-end gap-2 text-xs text-muted-foreground">
-                <Clock size={12} />
-                <span>
-                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
+              <div className="glass-card p-4 rounded-tr-xl rounded-bl-xl rounded-br-xl">
+                <p className="text-foreground">{currentResponse}<span className="animate-pulse">|</span></p>
               </div>
             </div>
-            
-            {message.sender === 'user' && (
-              <div className="bg-accent/50 h-10 w-10 rounded-full flex items-center justify-center">
-                <User size={18} className="text-accent-foreground" />
-              </div>
-            )}
-          </div>
-        ))}
-        
-        {/* Currently typing message */}
-        {isTyping && currentResponse && (
-          <div className="flex items-start gap-3 self-start max-w-[80%] animate-slide-up">
-            <div className="bg-primary/10 h-10 w-10 rounded-full flex items-center justify-center">
-              <MessageCircle size={18} className="text-primary" />
-            </div>
-            <div className="glass-card p-4 rounded-tr-xl rounded-bl-xl rounded-br-xl">
-              <p className="text-foreground">{currentResponse}<span className="animate-pulse">|</span></p>
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+      </ScrollArea>
       
       {/* Input area for ongoing conversation */}
       <div className="flex gap-2 mt-4">

@@ -38,10 +38,14 @@ async function getAIResponse(prompt: string): Promise<string> {
 
     const data = await response.json();
     
-    // Check if the response has the expected format
+    // Check for different response formats from the API
     if (data && data.generated_text) {
       console.log("Received AI response:", data.generated_text);
       return data.generated_text;
+    } else if (Array.isArray(data) && data[0] && data[0].generated_text) {
+      // Handle array format response
+      console.log("Received AI response (array format):", data[0].generated_text);
+      return data[0].generated_text;
     } else {
       console.error("Unexpected API response format:", data);
       return generateFallbackResponse(prompt);
@@ -53,12 +57,20 @@ async function getAIResponse(prompt: string): Promise<string> {
   }
 }
 
-// Generate fallback responses based on the input
+// Generate language-aware fallback responses based on the input
 function generateFallbackResponse(prompt: string): string {
+  // Detect if the prompt is likely not in English
+  const isLikelyNotEnglish = !isEnglishText(prompt);
+  
   // Extract context from the prompt
   const promptLower = prompt.toLowerCase();
   
-  if (promptLower.includes("feel") || promptLower.includes("emotion")) {
+  if (isLikelyNotEnglish) {
+    // For non-English input, provide a generic response that acknowledges
+    // we understood they're expressing feelings
+    return "I understand your message. Please continue sharing your thoughts and feelings. I'm here to listen.";
+  }
+  else if (promptLower.includes("feel") || promptLower.includes("emotion")) {
     return "I understand that your feelings are important. Would you like to tell me more about how this situation is affecting you emotionally?";
   } 
   else if (promptLower.includes("friend") || promptLower.includes("relationship") || promptLower.includes("partner")) {
@@ -82,6 +94,25 @@ function generateFallbackResponse(prompt: string): string {
   else {
     return "I'm listening attentively to what you're sharing. Your experiences and feelings matter. Would you like to tell me more about this situation and how it's affecting you?";
   }
+}
+
+// Simple function to detect if text is likely in English
+function isEnglishText(text: string): boolean {
+  // This is a simple heuristic - counting common English words
+  const commonEnglishWords = ['the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'I', 
+                             'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at'];
+  
+  const words = text.toLowerCase().split(/\s+/);
+  let englishWordCount = 0;
+  
+  words.forEach(word => {
+    if (commonEnglishWords.includes(word)) {
+      englishWordCount++;
+    }
+  });
+  
+  // If more than 10% of words are common English words, it's likely English
+  return (englishWordCount / words.length) > 0.1;
 }
 
 // Helper function to split response into sentences
