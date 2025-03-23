@@ -66,8 +66,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const updateVisitCount = async () => {
     try {
-      // Using type assertion to bypass TypeScript checking
-      const { error } = await supabase.rpc('update_visit_count' as any);
+      // Use a properly typed approach with generic parameters to call the RPC function
+      const { error } = await supabase.rpc('update_visit_count', {}, {
+        // Empty parameters object is required for the function call
+        // The second empty object is for options
+      });
+      
       if (error) {
         console.error('Error updating visit count:', error);
       }
