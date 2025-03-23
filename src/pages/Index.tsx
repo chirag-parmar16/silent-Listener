@@ -7,7 +7,6 @@ import SilentListener from '@/components/SilentListener';
 import MotivationalClosure from '@/components/MotivationalClosure';
 import ConfessionWall from '@/components/ConfessionWall';
 import { ChevronDown } from 'lucide-react';
-
 enum VentStage {
   Welcome,
   TargetSelection,
@@ -15,17 +14,16 @@ enum VentStage {
   Listening,
   Motivation,
 }
-
 const Index = () => {
   const [stage, setStage] = useState<VentStage>(VentStage.Welcome);
   const [selectedTarget, setSelectedTarget] = useState('');
   const [ventText, setVentText] = useState('');
   const [listenerMode, setListenerMode] = useState('sympathy');
-
   const handleTargetSelect = (target: string) => {
     setSelectedTarget(target);
     setStage(VentStage.Venting);
 
+    // Smooth scroll to the venting form
     setTimeout(() => {
       window.scrollTo({
         top: window.innerHeight * 0.8,
@@ -33,28 +31,27 @@ const Index = () => {
       });
     }, 100);
   };
-
   const handleVentSubmit = (vent: string, mode: string) => {
     setVentText(vent);
     setListenerMode(mode);
     setStage(VentStage.Listening);
 
+    // Scroll to top of the section
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
     });
   };
-
   const handleReset = () => {
     setStage(VentStage.TargetSelection);
     setVentText('');
 
+    // Scroll to target selection
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
     });
   };
-
   const scrollToVent = () => {
     setStage(VentStage.TargetSelection);
     setTimeout(() => {
@@ -64,16 +61,15 @@ const Index = () => {
       });
     }, 100);
   };
-
   const renderStageContent = () => {
     switch (stage) {
       case VentStage.Welcome:
         return <div className="min-h-screen flex flex-col">
-            <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-16 pt-24 md:pt-32">
+            <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-16">
               <div className="space-y-6 max-w-3xl animate-fade-in">
                 <div className="chip bg-primary/10 text-primary mx-auto">Express Without Fear</div>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight">Silent Listener </h1>
-                <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight">Silent Listener </h1>
+                <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto my-[70px]">
                   A safe, anonymous space where you can express your emotions freely without judgment.
                 </p>
                 
@@ -248,7 +244,6 @@ const Index = () => {
         return null;
     }
   };
-
   return <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-1">
@@ -257,5 +252,4 @@ const Index = () => {
       <Footer />
     </div>;
 };
-
 export default Index;
