@@ -1,8 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, User, Clock, ThumbsUp, Share2, RefreshCw, Send } from 'lucide-react';
 import { generateAIResponses } from '@/utils/aiResponseGenerator';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/components/ui/use-toast';
 
 interface SilentListenerProps {
   ventText: string;
@@ -32,6 +33,16 @@ const SilentListener: React.FC<SilentListenerProps> = ({
   const [typingIndex, setTypingIndex] = useState(0);
   const [responseIndex, setResponseIndex] = useState(0);
   const [currentAIResponses, setCurrentAIResponses] = useState<string[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Scroll to bottom whenever messages change
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+  
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, currentResponse]);
   
   // Initialize conversation with the initial vent
   useEffect(() => {
@@ -57,6 +68,8 @@ const SilentListener: React.FC<SilentListenerProps> = ({
       // Get conversation history for context
       const conversationHistory = messages.map(m => m.text);
       
+      console.log("Getting AI responses with history:", conversationHistory);
+      
       // Get AI responses
       const responses = await generateAIResponses({ 
         ventText: userMessage, 
@@ -65,14 +78,26 @@ const SilentListener: React.FC<SilentListenerProps> = ({
         conversationHistory
       });
       
+      console.log("Received AI responses:", responses);
+      
       if (Array.isArray(responses) && responses.length > 0) {
         setCurrentAIResponses(responses);
       } else {
         console.error("Expected array of responses but got:", responses);
+        toast({
+          title: "Connection issue",
+          description: "Using backup responses while we reconnect",
+          variant: "destructive"
+        });
         setCurrentAIResponses(["I'm listening...", "Please share more about how you feel."]);
       }
     } catch (error) {
       console.error("Error generating responses:", error);
+      toast({
+        title: "Connection issue",
+        description: "Using backup responses while we reconnect",
+        variant: "destructive"
+      });
       setCurrentAIResponses(["I'm here to listen.", "Please tell me more."]);
     }
   };
@@ -203,6 +228,7 @@ const SilentListener: React.FC<SilentListenerProps> = ({
             </div>
           </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
       
       {/* Input area for ongoing conversation */}
