@@ -37,7 +37,7 @@ const SilentListener: React.FC<SilentListenerProps> = ({
   const [isSpeechEnabled, setIsSpeechEnabled] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // Improved scroll to bottom with smooth behavior
+  // Improved scroll to bottom with smooth behavior but only within the chat container
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -45,6 +45,7 @@ const SilentListener: React.FC<SilentListenerProps> = ({
   };
   
   // Enhanced effect for scrolling - will run on all message changes and current response changes
+  // But only scrolls within the container, not the whole page
   useEffect(() => {
     const scrollTimer = setTimeout(() => {
       scrollToBottom();
@@ -267,7 +268,7 @@ const SilentListener: React.FC<SilentListenerProps> = ({
         </button>
       </div>
       
-      <ScrollArea className="h-[50vh] pr-4">
+      <ScrollArea className="h-[50vh] pr-4 overflow-y-auto">
         <div className="flex flex-col space-y-6 pb-4">
           {/* Messages history */}
           {messages.map((message, idx) => (

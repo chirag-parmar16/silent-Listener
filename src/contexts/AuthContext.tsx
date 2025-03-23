@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -65,9 +66,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const updateVisitCount = async () => {
     try {
-      // Fix the RPC call by providing both function name and parameters separately
+      // Fix the TypeScript error by using a type assertion
       const { error } = await supabase.rpc(
-        'update_visit_count',
+        'update_visit_count' as any,
         {}
       );
       
