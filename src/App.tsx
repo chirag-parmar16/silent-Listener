@@ -8,7 +8,6 @@ import Index from "./pages/Index";
 import About from "./pages/About";
 import Wall from "./pages/Wall";
 import NotFound from "./pages/NotFound";
-import Header from "./components/Header";
 
 const queryClient = new QueryClient();
 
@@ -18,11 +17,6 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <div className="text-center py-4 bg-gradient-to-r from-primary/20 to-secondary/20">
-          <h1 className="text-2xl font-bold">💡 Silent Listener – Hear Your Heart Speak ❤️</h1>
-          <p className="text-muted-foreground mt-1">"Because sometimes, being heard is all you need." 🧘‍♂️✨</p>
-        </div>
-        <Header />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/about" element={<About />} />

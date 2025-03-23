@@ -1,8 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
-import { MessageCircle, User, Clock, ThumbsUp, Share2, RefreshCw, Volume2, VolumeX } from 'lucide-react';
-import generateAIResponse from '../utils/aiResponseGenerator';
-import textToSpeech from '../utils/textToSpeech';
+import { MessageCircle, User, Clock, ThumbsUp, Share2, RefreshCw } from 'lucide-react';
+import { generateAIResponses } from '@/utils/aiResponseGenerator';
 
 interface SilentListenerProps {
   ventText: string;
@@ -24,52 +22,17 @@ const SilentListener: React.FC<SilentListenerProps> = ({
   const [isTyping, setIsTyping] = useState(true);
   const [typingIndex, setTypingIndex] = useState(0);
   const [responseIndex, setResponseIndex] = useState(0);
-  const [isSpeechEnabled, setIsSpeechEnabled] = useState(true);
-  const [isAILoading, setIsAILoading] = useState(true);
   
-  // Generate responses based on vent and mode using AI
+  // Generate AI-powered responses based on vent text, target, and mode
   useEffect(() => {
-    const fetchAIResponses = async () => {
-      setIsAILoading(true);
-      try {
-        const aiResponses = await generateAIResponse(ventText, target, mode);
-        console.log("AI responses received:", aiResponses);
-        
-        // Ensure responses is always an array
-        if (Array.isArray(aiResponses)) {
-          setResponses(aiResponses);
-        } else if (aiResponses && typeof aiResponses === 'string') {
-          // If it's a string, convert to array with one element
-          setResponses([aiResponses]);
-        } else {
-          // Fallback to default responses
-          setResponses([
-            `I understand how you feel about ${target}. It's okay to express these emotions.`,
-            "Thank you for sharing. Your feelings are valid.",
-            "I'm here to listen without judgment.",
-            "Sometimes just expressing these thoughts can help process them."
-          ]);
-        }
-      } catch (error) {
-        console.error('Error generating AI responses:', error);
-        // Fallback to simple responses if AI fails
-        setResponses([
-          `I understand how you feel about ${target}. It's okay to express these emotions.`,
-          "Thank you for sharing. Your feelings are valid.",
-          "I'm here to listen without judgment.",
-          "Sometimes just expressing these thoughts can help process them."
-        ]);
-      } finally {
-        setIsAILoading(false);
-      }
-    };
-    
-    fetchAIResponses();
+    // Use our AI response generator for more sophisticated responses
+    const aiResponses = generateAIResponses({ ventText, target, mode });
+    setResponses(aiResponses);
   }, [ventText, target, mode]);
   
-  // Simulate typing effect
+  // Simulate typing effect - keep existing code for the typing effect animation
   useEffect(() => {
-    if (!Array.isArray(responses) || responses.length === 0 || isAILoading) return;
+    if (responses.length === 0) return;
     
     if (responseIndex < responses.length) {
       const fullResponse = responses[responseIndex];
@@ -82,12 +45,7 @@ const SilentListener: React.FC<SilentListenerProps> = ({
         
         return () => clearTimeout(typingTimer);
       } else {
-        // Speak the complete response if speech is enabled
-        if (isSpeechEnabled && typingIndex === fullResponse.length) {
-          textToSpeech.speak(fullResponse);
-        }
-        
-        // Move to next response after delay
+        // Move to next response after delay - longer delay for more natural conversation pacing
         const nextResponseTimer = setTimeout(() => {
           setResponseIndex(responseIndex + 1);
           setTypingIndex(0);
@@ -100,52 +58,25 @@ const SilentListener: React.FC<SilentListenerProps> = ({
       // All responses completed
       setIsTyping(false);
       
-      // Move to motivation screen after a delay
+      // Move to motivation screen after a slightly longer delay for better UX
       const completeTimer = setTimeout(() => {
-        textToSpeech.stop(); // Stop any ongoing speech before moving on
         onComplete();
-      }, 2000);
+      }, 3000);
       
       return () => clearTimeout(completeTimer);
     }
-  }, [responses, responseIndex, typingIndex, isAILoading, isSpeechEnabled, onComplete]);
-
-  // Stop TTS when component unmounts
-  useEffect(() => {
-    return () => {
-      textToSpeech.stop();
-    };
-  }, []);
-  
-  const toggleSpeech = () => {
-    if (isSpeechEnabled) {
-      textToSpeech.stop();
-    }
-    setIsSpeechEnabled(!isSpeechEnabled);
-  };
-  
-  // Make sure we only display responses if they exist and are in array format
-  const displayedResponses = Array.isArray(responses) ? responses.slice(0, responseIndex) : [];
+  }, [responses, responseIndex, typingIndex, onComplete]);
   
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-xl font-medium">Silent Listener</h2>
-          <p className="text-muted-foreground mt-1">
-            {isTyping 
-              ? "The listener is reflecting on your words..." 
-              : "The listener has heard you completely"
-            }
-          </p>
-        </div>
-        <button 
-          onClick={toggleSpeech} 
-          className="glass-card p-2 rounded-full hover:bg-primary/10 transition-all"
-          aria-label={isSpeechEnabled ? "Disable speech" : "Enable speech"}
-        >
-          {isSpeechEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
-        </button>
+      <div>
+        <h2 className="text-xl font-medium">Silent Listener</h2>
+        <p className="text-muted-foreground mt-1">
+          {isTyping 
+            ? "The listener is reflecting on your words..." 
+            : "The listener has heard you completely"
+          }
+        </p>
       </div>
       
       <div className="flex flex-col space-y-6">
@@ -164,7 +95,7 @@ const SilentListener: React.FC<SilentListenerProps> = ({
         </div>
         
         {/* Silent Listener responses */}
-        {displayedResponses.map((response, index) => (
+        {responses.slice(0, responseIndex).map((response, index) => (
           <div key={index} className="flex items-start gap-3 self-start max-w-[80%] animate-slide-up">
             <div className="bg-primary/10 h-10 w-10 rounded-full flex items-center justify-center">
               <MessageCircle size={18} className="text-primary" />
