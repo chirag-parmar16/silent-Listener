@@ -12,7 +12,10 @@ interface MotivationalClosureProps {
 const MotivationalClosure: React.FC<MotivationalClosureProps> = ({ target, ventText, onReset }) => {
   const [motivationalMessage, setMotivationalMessage] = useState('');
   const [showSaved, setShowSaved] = useState(false);
-  const [isSpeechEnabled, setIsSpeechEnabled] = useState(false);
+  const [isSpeechEnabled, setIsSpeechEnabled] = useState(() => {
+    const saved = localStorage.getItem('silent-listener-auto-speak');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
   const { toast } = useToast();
   
   useEffect(() => {
@@ -56,12 +59,17 @@ const MotivationalClosure: React.FC<MotivationalClosureProps> = ({ target, ventT
     
     const messageIndex = determineMessageIndex();
     setMotivationalMessage(messages[messageIndex]);
-  }, [ventText]);
+    
+    // Automatically speak the message when component mounts
+    if (isSpeechEnabled) {
+      setTimeout(() => {
+        speakMessage(messages[messageIndex]);
+      }, 500);
+    }
+  }, [ventText, isSpeechEnabled]);
 
   // Function to speak the motivational message
   const speakMessage = (text: string) => {
-    if (!isSpeechEnabled) return;
-    
     if ('speechSynthesis' in window) {
       // Cancel any ongoing speech
       window.speechSynthesis.cancel();
