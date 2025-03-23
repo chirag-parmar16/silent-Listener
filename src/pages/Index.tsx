@@ -1,6 +1,4 @@
-
 import React, { useState } from 'react';
-import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import TargetSelector from '@/components/TargetSelector';
 import VentingForm from '@/components/VentingForm';
@@ -293,7 +291,6 @@ const Index = () => {
   
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <main className="flex-1">
         {renderStageContent()}
       </main>
@@ -303,3 +300,4 @@ const Index = () => {
 };
 
 export default Index;
+
