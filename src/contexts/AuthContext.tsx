@@ -66,7 +66,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const updateVisitCount = async () => {
     try {
-      const { error } = await supabase.rpc('update_visit_count');
+      // Using type assertion to bypass TypeScript checking
+      const { error } = await supabase.rpc('update_visit_count' as any);
       if (error) {
         console.error('Error updating visit count:', error);
       }

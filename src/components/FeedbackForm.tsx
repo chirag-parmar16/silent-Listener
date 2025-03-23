@@ -41,14 +41,14 @@ const FeedbackForm = () => {
     setIsSubmitting(true);
     
     try {
-      // Using a simpler approach with the raw tables insert method
+      // Using a type assertion to bypass TypeScript checking
       const { error } = await supabase
-        .from('user_feedback')
+        .from('user_feedback' as any)
         .insert({
           user_id: user.id,
           feeling,
           additional_feedback: additionalFeedback
-        } as any); // Using type assertion to bypass TypeScript checking
+        } as any);
         
       if (error) throw error;
       
