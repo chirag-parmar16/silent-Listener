@@ -3,6 +3,7 @@ interface ResponseOptions {
   ventText: string;
   target: string;
   mode: string;
+  conversationHistory?: string[]; // Add conversation history
 }
 
 // Function to get response from Hugging Face API
@@ -55,22 +56,27 @@ function splitIntoSentences(text: string): string[] {
   return sentences.filter(sentence => sentence.trim().length > 0).map(sentence => sentence.trim());
 }
 
-// Function to generate AI response based on vent text, target, and mode
-async function generateAIResponse(ventText: string, target: string, mode: string): Promise<string[]> {
+// Function to generate AI response based on vent text, target, mode, and conversation history
+async function generateAIResponse(ventText: string, target: string, mode: string, conversationHistory: string[] = []): Promise<string[]> {
+  // Construct conversation context from history
+  const conversationContext = conversationHistory.length > 0 
+    ? `Previous conversation: ${conversationHistory.join(" ")}. `
+    : "";
+  
   let prompt = "";
   
   switch (mode) {
     case 'sympathy':
-      prompt = `As someone who deeply cares about you, I want to respond to your concern about ${target}: "${ventText}". I should express empathy and understanding.`;
+      prompt = `${conversationContext}As someone who deeply cares about you, I want to respond to your concern about ${target}: "${ventText}". I should express empathy and understanding.`;
       break;
     case 'justification':
-      prompt = `I want to validate your feelings about ${target}: "${ventText}". I should affirm that your feelings are justified and reasonable.`;
+      prompt = `${conversationContext}I want to validate your feelings about ${target}: "${ventText}". I should affirm that your feelings are justified and reasonable.`;
       break;
     case 'argument':
-      prompt = `I want to offer a different perspective on your concern about ${target}: "${ventText}". I should gently challenge your viewpoint while being respectful.`;
+      prompt = `${conversationContext}I want to offer a different perspective on your concern about ${target}: "${ventText}". I should gently challenge your viewpoint while being respectful.`;
       break;
     default:
-      prompt = `Respond with empathy to this message: "${ventText}"`;
+      prompt = `${conversationContext}Respond with empathy to this message: "${ventText}"`;
   }
   
   try {
@@ -94,30 +100,7 @@ async function generateAIResponse(ventText: string, target: string, mode: string
 }
 
 // Main function to generate AI responses
-export function generateAIResponses({ ventText, target, mode }: ResponseOptions): string[] {
-  // For immediate rendering, return a few starter responses
-  const fallbackResponses = [
-    "That's wonderful to hear!",
-    " I'm glad you're feeling positive about this.",
-    " Would you like to share more?"
-  ];
-  
-  // Start fetching AI responses in the background
-  generateAIResponse(ventText, target, mode)
-    .then(aiResponses => {
-      // In a real application, you would update state here
-      console.info("AI responses received:", aiResponses);
-      return aiResponses;
-    })
-    .catch(error => {
-      console.error("Failed to get AI responses:", error);
-      return fallbackResponses;
-    });
-  
-  // Meanwhile, return fallback responses for immediate rendering
-  return [
-    `I'm listening to your thoughts about ${target}...`,
-    "I appreciate you sharing this with me.",
-    "Please continue, I'm here for you."
-  ];
+export function generateAIResponses({ ventText, target, mode, conversationHistory = [] }: ResponseOptions): Promise<string[]> {
+  // Now this function will return a Promise instead of immediate responses
+  return generateAIResponse(ventText, target, mode, conversationHistory);
 }
