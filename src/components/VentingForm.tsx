@@ -15,6 +15,7 @@ const VentingForm: React.FC<VentingFormProps> = ({ target, onSubmit, onReset }) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [charactersLeft, setCharactersLeft] = useState(2000);
+  const [isSpeechEnabled, setIsSpeechEnabled] = useState(true);
   const { toast } = useToast();
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -27,6 +28,28 @@ const VentingForm: React.FC<VentingFormProps> = ({ target, onSubmit, onReset }) 
   }, [ventText]);
 
   useEffect(() => {
+    // Check if browser supports speech synthesis
+    if ('speechSynthesis' in window) {
+      // Speak a welcome message when component mounts
+      const welcomeMessage = new SpeechSynthesisUtterance(`Ready to vent about ${target}. Please share your feelings.`);
+      welcomeMessage.volume = 0.8;
+      
+      // Set a small timeout to ensure the message plays after navigation
+      setTimeout(() => {
+        if (isSpeechEnabled) {
+          window.speechSynthesis.speak(welcomeMessage);
+        }
+      }, 500);
+    } else {
+      setIsSpeechEnabled(false);
+      toast({
+        title: "Speech synthesis not supported",
+        description: "Your browser doesn't support text-to-speech features.",
+        variant: "destructive",
+      });
+    }
+    
+    // Initialize speech recognition
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       isRecognitionSupportedRef.current = true;
       
@@ -72,11 +95,25 @@ const VentingForm: React.FC<VentingFormProps> = ({ target, onSubmit, onReset }) 
     }
     
     return () => {
+      // Cancel any ongoing speech when component unmounts
+      window.speechSynthesis.cancel();
+      
       if (recognitionRef.current && isRecording) {
         recognitionRef.current.stop();
       }
     };
   }, []);
+
+  const speakFeedback = (message: string) => {
+    if (isSpeechEnabled && 'speechSynthesis' in window) {
+      // Cancel any existing speech
+      window.speechSynthesis.cancel();
+      
+      const speechFeedback = new SpeechSynthesisUtterance(message);
+      speechFeedback.volume = 0.8;
+      window.speechSynthesis.speak(speechFeedback);
+    }
+  };
 
   const saveVentToHistory = (ventText: string, mode: string) => {
     try {
@@ -110,9 +147,7 @@ const VentingForm: React.FC<VentingFormProps> = ({ target, onSubmit, onReset }) 
       saveVentToHistory(ventText, mode);
       
       // Speech feedback for submission
-      const speechFeedback = new SpeechSynthesisUtterance("Message sent. Awaiting response.");
-      speechFeedback.volume = 0.8;
-      window.speechSynthesis.speak(speechFeedback);
+      speakFeedback("Message sent. The Silent Listener is preparing a response for you.");
 
       setTimeout(() => {
         onSubmit(ventText, mode);
@@ -124,6 +159,8 @@ const VentingForm: React.FC<VentingFormProps> = ({ target, onSubmit, onReset }) 
         description: "Please share what's on your mind.",
         variant: "destructive",
       });
+      
+      speakFeedback("Please enter some text before submitting.");
     }
   };
 
@@ -147,9 +184,7 @@ const VentingForm: React.FC<VentingFormProps> = ({ target, onSubmit, onReset }) 
         });
         
         // Speech feedback for recording start
-        const speechFeedback = new SpeechSynthesisUtterance("Recording started. Please speak.");
-        speechFeedback.volume = 0.8;
-        window.speechSynthesis.speak(speechFeedback);
+        speakFeedback("Recording started. Please speak clearly.");
       } catch (error) {
         console.error('Error starting speech recognition:', error);
         toast({
@@ -172,9 +207,7 @@ const VentingForm: React.FC<VentingFormProps> = ({ target, onSubmit, onReset }) 
         });
         
         // Speech feedback for recording stop
-        const speechFeedback = new SpeechSynthesisUtterance("Recording stopped.");
-        speechFeedback.volume = 0.8;
-        window.speechSynthesis.speak(speechFeedback);
+        speakFeedback("Recording stopped. Your words have been added to the text.");
       } catch (error) {
         console.error('Error stopping speech recognition:', error);
       }
@@ -198,9 +231,29 @@ const VentingForm: React.FC<VentingFormProps> = ({ target, onSubmit, onReset }) 
       });
       
       // Speech feedback for clearing
-      const speechFeedback = new SpeechSynthesisUtterance("Text cleared.");
-      speechFeedback.volume = 0.8;
-      window.speechSynthesis.speak(speechFeedback);
+      speakFeedback("Text cleared. You can start fresh.");
+    }
+  };
+
+  const toggleSpeech = () => {
+    setIsSpeechEnabled(!isSpeechEnabled);
+    
+    if (!isSpeechEnabled) {
+      // Speech was just enabled
+      speakFeedback("Voice feedback enabled.");
+      
+      toast({
+        title: "Voice feedback enabled",
+        description: "You will now receive audio feedback.",
+      });
+    } else {
+      // Speech was just disabled, no need to speak this message
+      window.speechSynthesis.cancel();
+      
+      toast({
+        title: "Voice feedback disabled",
+        description: "Audio feedback has been turned off.",
+      });
     }
   };
 
@@ -216,6 +269,19 @@ const VentingForm: React.FC<VentingFormProps> = ({ target, onSubmit, onReset }) 
         </div>
         
         <div className="flex gap-2">
+          <button
+            onClick={toggleSpeech}
+            className={`p-3 rounded-full transition-all ${
+              isSpeechEnabled 
+                ? 'bg-accent text-accent-foreground' 
+                : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+            }`}
+            aria-label={isSpeechEnabled ? "Disable voice feedback" : "Enable voice feedback"}
+            title={isSpeechEnabled ? "Disable voice feedback" : "Enable voice feedback"}
+          >
+            {isSpeechEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+          </button>
+          
           <button
             onClick={toggleRecording}
             className={`p-3 rounded-full transition-all ${
