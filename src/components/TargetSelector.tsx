@@ -75,18 +75,18 @@ const TargetSelector: React.FC<TargetSelectorProps> = ({ onSelect }) => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div>
+    <div className="space-y-8 animate-fade-in p-4">
+      <div className="px-2">
         <h2 className="text-xl font-medium mb-2">What's bothering you today?</h2>
         <p className="text-muted-foreground">Select what you want to vent about</p>
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
         {targets.map((target) => (
           <div
             key={target.id}
             className={`
-              relative glass-card p-4 h-28 cursor-pointer transition-all duration-300 animate-hover
+              relative glass-card p-6 h-32 cursor-pointer transition-all duration-300 animate-hover
               ${selectedTarget === target.id 
                 ? 'border-primary border-2 shadow-neon ring-2 ring-primary/20' 
                 : 'hover:shadow-soft hover:-translate-y-1'
@@ -94,7 +94,7 @@ const TargetSelector: React.FC<TargetSelectorProps> = ({ onSelect }) => {
             `}
             onClick={() => handleTargetSelect(target.id)}
           >
-            <div className="flex flex-col h-full justify-center items-center text-center gap-2">
+            <div className="flex flex-col h-full justify-center items-center text-center gap-3">
               <div className={`${selectedTarget === target.id ? 'text-primary' : 'text-muted-foreground'}`}>
                 {target.icon}
               </div>
@@ -106,7 +106,7 @@ const TargetSelector: React.FC<TargetSelectorProps> = ({ onSelect }) => {
       </div>
       
       {showCustom && (
-        <div className="animate-slide-up space-y-4">
+        <div className="animate-slide-up space-y-4 px-2">
           <div className="modern-form flex flex-col md:flex-row gap-3">
             <input
               type="text"

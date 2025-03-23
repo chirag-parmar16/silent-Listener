@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Trash2, Volume2, VolumeX, RefreshCw } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
@@ -108,6 +109,11 @@ const VentingForm: React.FC<VentingFormProps> = ({ target, onSubmit, onReset }) 
       
       saveVentToHistory(ventText, mode);
       
+      // Speech feedback for submission
+      const speechFeedback = new SpeechSynthesisUtterance("Message sent. Awaiting response.");
+      speechFeedback.volume = 0.8;
+      window.speechSynthesis.speak(speechFeedback);
+
       setTimeout(() => {
         onSubmit(ventText, mode);
         setIsSubmitting(false);
@@ -139,6 +145,11 @@ const VentingForm: React.FC<VentingFormProps> = ({ target, onSubmit, onReset }) 
           title: "Voice recording started",
           description: "Speak clearly to vent your feelings.",
         });
+        
+        // Speech feedback for recording start
+        const speechFeedback = new SpeechSynthesisUtterance("Recording started. Please speak.");
+        speechFeedback.volume = 0.8;
+        window.speechSynthesis.speak(speechFeedback);
       } catch (error) {
         console.error('Error starting speech recognition:', error);
         toast({
@@ -159,6 +170,11 @@ const VentingForm: React.FC<VentingFormProps> = ({ target, onSubmit, onReset }) 
           title: "Voice recording stopped",
           description: "Your spoken words have been converted to text.",
         });
+        
+        // Speech feedback for recording stop
+        const speechFeedback = new SpeechSynthesisUtterance("Recording stopped.");
+        speechFeedback.volume = 0.8;
+        window.speechSynthesis.speak(speechFeedback);
       } catch (error) {
         console.error('Error stopping speech recognition:', error);
       }
@@ -180,6 +196,11 @@ const VentingForm: React.FC<VentingFormProps> = ({ target, onSubmit, onReset }) 
         title: "Vent cleared",
         description: "Start fresh with a clean slate.",
       });
+      
+      // Speech feedback for clearing
+      const speechFeedback = new SpeechSynthesisUtterance("Text cleared.");
+      speechFeedback.volume = 0.8;
+      window.speechSynthesis.speak(speechFeedback);
     }
   };
 
