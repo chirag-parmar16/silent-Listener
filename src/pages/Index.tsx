@@ -217,7 +217,7 @@ const Index = () => {
             </div>
           </div>;
       case VentStage.TargetSelection:
-        return <div className="min-h-screen flex flex-col pt-24 pb-16 px-6 py-0">
+        return <div className="min-h-screen flex flex-col pt-24">
             <div className="max-w-3xl mx-auto w-full">
               <TargetSelector onSelect={handleTargetSelect} />
             </div>
