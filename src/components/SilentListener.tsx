@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { MessageCircle, User, Clock, ThumbsUp, Share2, RefreshCw } from 'lucide-react';
+import { MessageCircle, User, Clock, ThumbsUp, Share2, RefreshCw, Volume2, VolumeX } from 'lucide-react';
+import generateAIResponse from '../utils/aiResponseGenerator';
+import textToSpeech from '../utils/textToSpeech';
 
 interface SilentListenerProps {
   ventText: string;
@@ -22,57 +24,36 @@ const SilentListener: React.FC<SilentListenerProps> = ({
   const [isTyping, setIsTyping] = useState(true);
   const [typingIndex, setTypingIndex] = useState(0);
   const [responseIndex, setResponseIndex] = useState(0);
+  const [isSpeechEnabled, setIsSpeechEnabled] = useState(true);
+  const [isAILoading, setIsAILoading] = useState(true);
   
-  // Generate responses based on vent and mode
+  // Generate responses based on vent and mode using AI
   useEffect(() => {
-    const generateResponses = () => {
-      const targetNormalized = target.toLowerCase();
-      let generatedResponses: string[] = [];
-      
-      // This is a simplified implementation - in a real app you would use an API or more complex logic
-      switch (mode) {
-        case 'sympathy':
-          generatedResponses = [
-            `I understand how difficult your situation with ${targetNormalized} must be. It's completely normal to feel this way.`,
-            "You're not alone in these feelings. Many people go through similar experiences.",
-            "I hear you. Your feelings are valid, and it's okay to express them.",
-            "Thank you for sharing this. It takes courage to express these emotions."
-          ];
-          break;
-        case 'justification':
-          generatedResponses = [
-            `You have every right to feel this way about ${targetNormalized}. Your reaction makes sense.`,
-            "Anyone in your position would likely feel the same way.",
-            "Your perspective is completely justified given what you've experienced.",
-            "These emotions are a natural response to your situation."
-          ];
-          break;
-        case 'argument':
-          generatedResponses = [
-            `Have you considered looking at the situation with ${targetNormalized} from a different angle?`,
-            "Sometimes challenging our initial reactions can lead to new insights.",
-            "It might be worth exploring alternative interpretations of this situation.",
-            "What would happen if you approached this from a different perspective?"
-          ];
-          break;
-        default:
-          generatedResponses = [
-            "I'm here to listen. Please continue sharing your thoughts.",
-            "Thank you for expressing yourself. Your feelings matter.",
-            "I appreciate your honesty and openness.",
-            "I'm listening attentively to everything you're saying."
-          ];
+    const fetchAIResponses = async () => {
+      setIsAILoading(true);
+      try {
+        const aiResponses = await generateAIResponse(ventText, target, mode);
+        setResponses(aiResponses);
+      } catch (error) {
+        console.error('Error generating AI responses:', error);
+        // Fallback to simple responses if AI fails
+        setResponses([
+          `I understand how you feel about ${target}. It's okay to express these emotions.`,
+          "Thank you for sharing. Your feelings are valid.",
+          "I'm here to listen without judgment.",
+          "Sometimes just expressing these thoughts can help process them."
+        ]);
+      } finally {
+        setIsAILoading(false);
       }
-      
-      return generatedResponses;
     };
     
-    setResponses(generateResponses());
+    fetchAIResponses();
   }, [ventText, target, mode]);
   
   // Simulate typing effect
   useEffect(() => {
-    if (responses.length === 0) return;
+    if (responses.length === 0 || isAILoading) return;
     
     if (responseIndex < responses.length) {
       const fullResponse = responses[responseIndex];
@@ -85,6 +66,11 @@ const SilentListener: React.FC<SilentListenerProps> = ({
         
         return () => clearTimeout(typingTimer);
       } else {
+        // Speak the complete response if speech is enabled
+        if (isSpeechEnabled && typingIndex === fullResponse.length) {
+          textToSpeech.speak(fullResponse);
+        }
+        
         // Move to next response after delay
         const nextResponseTimer = setTimeout(() => {
           setResponseIndex(responseIndex + 1);
@@ -100,23 +86,47 @@ const SilentListener: React.FC<SilentListenerProps> = ({
       
       // Move to motivation screen after a delay
       const completeTimer = setTimeout(() => {
+        textToSpeech.stop(); // Stop any ongoing speech before moving on
         onComplete();
       }, 2000);
       
       return () => clearTimeout(completeTimer);
     }
-  }, [responses, responseIndex, typingIndex, onComplete]);
+  }, [responses, responseIndex, typingIndex, isAILoading, isSpeechEnabled, onComplete]);
+
+  // Stop TTS when component unmounts
+  useEffect(() => {
+    return () => {
+      textToSpeech.stop();
+    };
+  }, []);
+  
+  const toggleSpeech = () => {
+    if (isSpeechEnabled) {
+      textToSpeech.stop();
+    }
+    setIsSpeechEnabled(!isSpeechEnabled);
+  };
   
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h2 className="text-xl font-medium">Silent Listener</h2>
-        <p className="text-muted-foreground mt-1">
-          {isTyping 
-            ? "The listener is reflecting on your words..." 
-            : "The listener has heard you completely"
-          }
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-xl font-medium">Silent Listener</h2>
+          <p className="text-muted-foreground mt-1">
+            {isTyping 
+              ? "The listener is reflecting on your words..." 
+              : "The listener has heard you completely"
+            }
+          </p>
+        </div>
+        <button 
+          onClick={toggleSpeech} 
+          className="glass-card p-2 rounded-full hover:bg-primary/10 transition-all"
+          aria-label={isSpeechEnabled ? "Disable speech" : "Enable speech"}
+        >
+          {isSpeechEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+        </button>
       </div>
       
       <div className="flex flex-col space-y-6">
