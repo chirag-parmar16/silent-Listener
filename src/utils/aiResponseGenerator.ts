@@ -14,6 +14,8 @@ const analyzeSentiment = (text: string) => {
 // Generate AI response with Hugging Face Inference API
 const getAIResponse = async (prompt: string) => {
   try {
+    console.log("Calling Hugging Face API with prompt:", prompt);
+    
     // Use a model that's well-suited for conversational responses
     const response = await fetch('https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill', {
       method: 'POST',
@@ -23,7 +25,7 @@ const getAIResponse = async (prompt: string) => {
       body: JSON.stringify({
         inputs: prompt,
         parameters: {
-          max_new_tokens: 100,
+          max_length: 100,
           temperature: 0.7,
           top_p: 0.9,
           repetition_penalty: 1.2
@@ -32,6 +34,8 @@ const getAIResponse = async (prompt: string) => {
     });
     
     const result = await response.json();
+    console.log("API response:", result);
+    
     if (result.generated_text) {
       return result.generated_text;
     } else if (result[0]?.generated_text) {
@@ -61,7 +65,7 @@ const generateFallbackResponse = (prompt: string) => {
 
 // Generate personalized AI response based on the vent text, target and mode
 const generateAIResponse = async (ventText: string, target: string, mode: string) => {
-  if (!ventText) return '';
+  if (!ventText) return [];
   
   const { isLong, isNegative, isPositive } = analyzeSentiment(ventText);
   let prompt = '';
@@ -81,12 +85,23 @@ const generateAIResponse = async (ventText: string, target: string, mode: string
       prompt = `I want to respond thoughtfully to this: "${ventText}". I should be supportive and understanding.`;
   }
   
-  const response = await getAIResponse(prompt);
-  
-  // Use text-to-speech to speak the response
-  textToSpeech.speak(response);
-  
-  return response;
+  try {
+    const response = await getAIResponse(prompt);
+    
+    // Use text-to-speech to speak the response
+    textToSpeech.speak(response);
+    
+    // Break the response into smaller chunks for better UI display
+    // and create an array of responses
+    const sentences = response.match(/[^.!?]+[.!?]+/g) || [response];
+    
+    // Return the array of response sentences
+    return sentences.filter(sentence => sentence.trim().length > 0);
+  } catch (error) {
+    console.error("Error generating response:", error);
+    return ["I understand how you feel. Sometimes life can be challenging, but I'm here to listen.",
+           "Thank you for sharing your thoughts with me. Would you like to talk more about it?"];
+  }
 };
 
 export default generateAIResponse;

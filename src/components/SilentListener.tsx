@@ -33,7 +33,23 @@ const SilentListener: React.FC<SilentListenerProps> = ({
       setIsAILoading(true);
       try {
         const aiResponses = await generateAIResponse(ventText, target, mode);
-        setResponses(aiResponses);
+        console.log("AI responses received:", aiResponses);
+        
+        // Ensure responses is always an array
+        if (Array.isArray(aiResponses)) {
+          setResponses(aiResponses);
+        } else if (aiResponses && typeof aiResponses === 'string') {
+          // If it's a string, convert to array with one element
+          setResponses([aiResponses]);
+        } else {
+          // Fallback to default responses
+          setResponses([
+            `I understand how you feel about ${target}. It's okay to express these emotions.`,
+            "Thank you for sharing. Your feelings are valid.",
+            "I'm here to listen without judgment.",
+            "Sometimes just expressing these thoughts can help process them."
+          ]);
+        }
       } catch (error) {
         console.error('Error generating AI responses:', error);
         // Fallback to simple responses if AI fails
@@ -53,7 +69,7 @@ const SilentListener: React.FC<SilentListenerProps> = ({
   
   // Simulate typing effect
   useEffect(() => {
-    if (responses.length === 0 || isAILoading) return;
+    if (!Array.isArray(responses) || responses.length === 0 || isAILoading) return;
     
     if (responseIndex < responses.length) {
       const fullResponse = responses[responseIndex];
@@ -108,6 +124,9 @@ const SilentListener: React.FC<SilentListenerProps> = ({
     setIsSpeechEnabled(!isSpeechEnabled);
   };
   
+  // Make sure we only display responses if they exist and are in array format
+  const displayedResponses = Array.isArray(responses) ? responses.slice(0, responseIndex) : [];
+  
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
@@ -145,7 +164,7 @@ const SilentListener: React.FC<SilentListenerProps> = ({
         </div>
         
         {/* Silent Listener responses */}
-        {responses.slice(0, responseIndex).map((response, index) => (
+        {displayedResponses.map((response, index) => (
           <div key={index} className="flex items-start gap-3 self-start max-w-[80%] animate-slide-up">
             <div className="bg-primary/10 h-10 w-10 rounded-full flex items-center justify-center">
               <MessageCircle size={18} className="text-primary" />
