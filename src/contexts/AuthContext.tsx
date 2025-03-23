@@ -66,8 +66,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const updateVisitCount = async () => {
     try {
-      // Using a type assertion to call the RPC function
-      const { error } = await supabase.rpc('update_visit_count', {});
+      // Use a proper type assertion for the RPC function call
+      const { error } = await supabase.rpc(
+        'update_visit_count' as string,
+        {}
+      );
       
       if (error) {
         console.error('Error updating visit count:', error);
