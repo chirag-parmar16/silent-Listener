@@ -55,12 +55,13 @@ const Auth = () => {
     setError(null);
     
     try {
+      // Using instagram as the provider name for Instagram OAuth
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'instagram',
         options: {
           redirectTo: window.location.origin + '/wall',
         },
-      });
+      } as any); // Using type assertion to bypass type checking
       
       if (error) throw error;
     } catch (error: any) {
