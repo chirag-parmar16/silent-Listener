@@ -223,7 +223,7 @@ const Index = () => {
             </div>
           </div>;
       case VentStage.Venting:
-        return <div className="min-h-screen flex flex-col pt-24 pb-16 px-6">
+        return <div className="min-h-screen flex flex-col pt-40 pb-16 px-6">
             <div className="max-w-3xl mx-auto w-full">
               <VentingForm target={selectedTarget} onSubmit={handleVentSubmit} onReset={handleReset} />
             </div>
