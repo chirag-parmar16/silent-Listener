@@ -59,16 +59,15 @@ async function getAIResponse(prompt: string): Promise<string> {
 
 // Generate language-aware fallback responses based on the input
 function generateFallbackResponse(prompt: string): string {
-  // Detect if the prompt is likely not in English
-  const isLikelyNotEnglish = !isEnglishText(prompt);
+  // Improved multi-language detection
+  const isLikelyNotEnglish = detectMultiLanguage(prompt);
   
   // Extract context from the prompt
   const promptLower = prompt.toLowerCase();
   
   if (isLikelyNotEnglish) {
-    // For non-English input, provide a generic response that acknowledges
-    // we understood they're expressing feelings
-    return "I understand your message. Please continue sharing your thoughts and feelings. I'm here to listen.";
+    // For non-English or mixed language input, provide a language-agnostic response
+    return "I understand you're expressing your feelings. Please continue sharing in any language or mixture of languages that's comfortable for you. I'm here to listen.";
   }
   else if (promptLower.includes("feel") || promptLower.includes("emotion")) {
     return "I understand that your feelings are important. Would you like to tell me more about how this situation is affecting you emotionally?";
@@ -96,9 +95,14 @@ function generateFallbackResponse(prompt: string): string {
   }
 }
 
-// Simple function to detect if text is likely in English
-function isEnglishText(text: string): boolean {
-  // This is a simple heuristic - counting common English words
+// Enhanced function to detect multi-language text including mixtures like Gujalish
+function detectMultiLanguage(text: string): boolean {
+  // This is a more robust implementation for detecting non-English or mixed language text
+  
+  // Check for non-Latin characters (covers most non-English scripts)
+  const hasNonLatinChars = /[^\u0000-\u007F\u0080-\u00FF\u0100-\u017F]/.test(text);
+  
+  // Check for common English words
   const commonEnglishWords = ['the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'I', 
                              'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at'];
   
@@ -111,8 +115,15 @@ function isEnglishText(text: string): boolean {
     }
   });
   
-  // If more than 10% of words are common English words, it's likely English
-  return (englishWordCount / words.length) > 0.1;
+  // Check English word ratio - if below threshold, likely non-English or mixed
+  const englishWordRatio = englishWordCount / words.length;
+  
+  // Check for mixed language patterns (like Gujalish - Gujarati + English)
+  // This identifies text that has both English words and non-Latin characters
+  const potentialMixedLanguage = hasNonLatinChars && (englishWordRatio > 0 && englishWordRatio < 0.4);
+  
+  // Either predominantly non-English or a mixed language
+  return (englishWordRatio < 0.1) || potentialMixedLanguage || hasNonLatinChars;
 }
 
 // Helper function to split response into sentences
@@ -127,6 +138,9 @@ function splitIntoSentences(text: string): string[] {
 async function generateAIResponse(ventText: string, target: string, mode: string, conversationHistory: string[] = []): Promise<string[]> {
   console.log("Generating AI response with:", { ventText, target, mode, conversationHistory });
   
+  // Detect if the input is likely non-English or mixed language
+  const isMultiLanguage = detectMultiLanguage(ventText);
+  
   // Construct conversation context from history - limit to last 3 exchanges for context
   const recentHistory = conversationHistory.slice(-6);
   const conversationContext = recentHistory.length > 0 
@@ -135,21 +149,32 @@ async function generateAIResponse(ventText: string, target: string, mode: string
   
   let prompt = "";
   
-  switch (mode) {
-    case 'sympathy':
-      prompt = `${conversationContext}As someone who deeply cares, respond with empathy to: "${ventText}" regarding ${target}. Be supportive and understanding.`;
-      break;
-    case 'justification':
-      prompt = `${conversationContext}Respond to: "${ventText}" about ${target}. Validate their feelings and show them their reactions are reasonable.`;
-      break;
-    case 'argument':
-      prompt = `${conversationContext}Regarding: "${ventText}" about ${target}, offer a gentle alternative perspective while remaining supportive.`;
-      break;
-    default:
-      prompt = `${conversationContext}Respond with empathy and understanding to: "${ventText}"`;
+  if (isMultiLanguage) {
+    // For mixed language or non-English input, use a more generic prompt that focuses on emotional content
+    prompt = `${conversationContext}Reply with empathy and understanding to: "${ventText}". The message may contain multiple languages or mixed languages. Focus on emotional support regardless of language.`;
+  } else {
+    switch (mode) {
+      case 'sympathy':
+        prompt = `${conversationContext}As someone who deeply cares, respond with empathy to: "${ventText}" regarding ${target}. Be supportive and understanding.`;
+        break;
+      case 'justification':
+        prompt = `${conversationContext}Respond to: "${ventText}" about ${target}. Validate their feelings and show them their reactions are reasonable.`;
+        break;
+      case 'argument':
+        prompt = `${conversationContext}Regarding: "${ventText}" about ${target}, offer a gentle alternative perspective while remaining supportive.`;
+        break;
+      default:
+        prompt = `${conversationContext}Respond with empathy and understanding to: "${ventText}"`;
+    }
   }
   
   try {
+    // For mixed language input, potentially bypass AI model and use directly generated responses
+    if (isMultiLanguage) {
+      // For non-English or mixed language, use more reliable fallback responses
+      return generateMultiLanguageFallbacks(ventText, target);
+    }
+    
     const response = await getAIResponse(prompt);
     let sentences = splitIntoSentences(response);
     
@@ -177,12 +202,42 @@ async function generateAIResponse(ventText: string, target: string, mode: string
   } catch (error) {
     console.error("Error generating AI response:", error);
     // Return fallback responses that are contextual
-    return [
-      `I'm here for you regarding this situation with ${target}.`,
-      "Your feelings about this are completely valid.",
-      "Would you like to tell me more about what happened?"
-    ];
+    return isMultiLanguage ? 
+      generateMultiLanguageFallbacks(ventText, target) : 
+      [
+        `I'm here for you regarding this situation with ${target}.`,
+        "Your feelings about this are completely valid.",
+        "Would you like to tell me more about what happened?"
+      ];
   }
+}
+
+// Generate multi-language aware fallback responses
+function generateMultiLanguageFallbacks(ventText: string, target: string): string[] {
+  // These responses are designed to be language-agnostic and focus on universal emotional support
+  const responses = [
+    "I understand your message and am here to listen.",
+    "Your feelings are important, regardless of how you express them.",
+    "I'm here to support you through this situation.",
+    `I can see this involves ${target}, and that seems important to you.`,
+    "Please feel free to continue expressing yourself in whatever language feels most comfortable.",
+    "I appreciate you sharing your thoughts and feelings with me.",
+    "Would you like to tell me more about what you're experiencing?",
+    "Your perspective matters, and I'm here to understand.",
+    "I'm focusing on the emotions behind your words."
+  ];
+  
+  // Select 3-4 appropriate responses
+  const selectedResponses = [];
+  selectedResponses.push(responses[0]); // Always include the first acknowledgment
+  selectedResponses.push(responses[3]); // Include the target-specific response
+  
+  // Add 1-2 more random responses
+  const remainingResponses = responses.filter((_, index) => ![0, 3].includes(index));
+  const shuffled = [...remainingResponses].sort(() => 0.5 - Math.random());
+  selectedResponses.push(...shuffled.slice(0, 2));
+  
+  return selectedResponses;
 }
 
 // Main function to generate AI responses
