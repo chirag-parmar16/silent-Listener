@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { MessageCircle, User, Clock, ThumbsUp, Share2, RefreshCw } from 'lucide-react';
 import { generateAIResponses } from '@/utils/aiResponseGenerator';
@@ -25,14 +26,26 @@ const SilentListener: React.FC<SilentListenerProps> = ({
   
   // Generate AI-powered responses based on vent text, target, and mode
   useEffect(() => {
-    // Use our AI response generator for more sophisticated responses
-    const aiResponses = generateAIResponses({ ventText, target, mode });
-    setResponses(aiResponses);
+    try {
+      // Use our AI response generator for more sophisticated responses
+      const aiResponses = generateAIResponses({ ventText, target, mode });
+      
+      // Ensure responses is always an array
+      if (Array.isArray(aiResponses)) {
+        setResponses(aiResponses);
+      } else {
+        console.error("Expected array of responses but got:", aiResponses);
+        setResponses(["I'm listening...", "Please share more about how you feel."]);
+      }
+    } catch (error) {
+      console.error("Error generating responses:", error);
+      setResponses(["I'm here to listen.", "Please tell me more."]);
+    }
   }, [ventText, target, mode]);
   
-  // Simulate typing effect - keep existing code for the typing effect animation
+  // Simulate typing effect for responses
   useEffect(() => {
-    if (responses.length === 0) return;
+    if (!Array.isArray(responses) || responses.length === 0) return;
     
     if (responseIndex < responses.length) {
       const fullResponse = responses[responseIndex];
@@ -95,7 +108,7 @@ const SilentListener: React.FC<SilentListenerProps> = ({
         </div>
         
         {/* Silent Listener responses */}
-        {responses.slice(0, responseIndex).map((response, index) => (
+        {Array.isArray(responses) && responses.slice(0, responseIndex).map((response, index) => (
           <div key={index} className="flex items-start gap-3 self-start max-w-[80%] animate-slide-up">
             <div className="bg-primary/10 h-10 w-10 rounded-full flex items-center justify-center">
               <MessageCircle size={18} className="text-primary" />

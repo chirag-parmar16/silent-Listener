@@ -5,124 +5,119 @@ interface ResponseOptions {
   mode: string;
 }
 
-// This utility generates more sophisticated AI-like responses
-// In a real application, this would connect to an API like OpenAI
-export function generateAIResponses({ ventText, target, mode }: ResponseOptions): string[] {
-  const targetNormalized = target.toLowerCase();
-  const ventLower = ventText.toLowerCase();
-  
-  // Extract sentiment and key topics from the vent text
-  const negativeWords = ['hate', 'angry', 'upset', 'frustrated', 'annoyed', 'hate', 'dislike'];
-  const positiveWords = ['like', 'love', 'appreciate', 'happy', 'glad', 'thankful'];
-  
-  const hasNegativeSentiment = negativeWords.some(word => ventLower.includes(word));
-  const hasPositiveSentiment = positiveWords.some(word => ventLower.includes(word));
-  
-  // Extract length to determine response depth
-  const isLongVent = ventText.length > 100;
-  
-  // Generate appropriate responses based on mode, sentiment, and length
-  let responses: string[] = [];
+// Function to get response from Hugging Face API
+async function getAIResponse(prompt: string): Promise<string> {
+  try {
+    const API_KEY = "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";
+    const response = await fetch("https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${API_KEY}`
+      },
+      body: JSON.stringify({
+        inputs: prompt,
+        parameters: {
+          max_length: 100,
+          temperature: 0.7,
+          top_p: 0.9,
+          repetition_penalty: 1.2
+        }
+      })
+    });
+
+    if (!response.ok) {
+      console.error("Error response from Hugging Face API:", await response.text());
+      throw new Error(`API responded with status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Check if the response has the expected format
+    if (data && data.generated_text) {
+      return data.generated_text;
+    } else {
+      console.error("Unexpected API response format:", data);
+      throw new Error("Unexpected API response format");
+    }
+  } catch (error) {
+    console.error("Error calling Hugging Face API:", error);
+    // Return fallback response in case of error
+    return "I'm here to listen and support you. Would you like to share more about how you're feeling?";
+  }
+}
+
+// Helper function to split response into sentences
+function splitIntoSentences(text: string): string[] {
+  // This regex splits on periods, exclamation marks, or question marks followed by a space or end of string
+  const sentences = text.split(/(?<=[.!?])\s+|(?<=[.!?])$/);
+  // Filter out empty strings and trim each sentence
+  return sentences.filter(sentence => sentence.trim().length > 0).map(sentence => sentence.trim());
+}
+
+// Function to generate AI response based on vent text, target, and mode
+async function generateAIResponse(ventText: string, target: string, mode: string): Promise<string[]> {
+  let prompt = "";
   
   switch (mode) {
     case 'sympathy':
-      if (hasNegativeSentiment) {
-        responses.push(
-          `I hear how difficult this situation with ${targetNormalized} is for you. Your feelings are completely valid.`,
-          "It takes courage to express these emotions. Thank you for sharing them."
-        );
-        
-        if (isLongVent) {
-          responses.push(
-            "I notice you've shared quite a lot about this situation. It seems like this has been weighing on you for some time.",
-            `When you talk about ${targetNormalized}, I can sense how deeply this affects you. Would talking more about a specific aspect help?`
-          );
-        }
-      } else if (hasPositiveSentiment) {
-        responses.push(
-          `I'm glad to hear you have some positive feelings about ${targetNormalized}, even in this challenging situation.`,
-          "It's important to acknowledge these moments of appreciation."
-        );
-      } else {
-        responses.push(
-          `I understand your situation with ${targetNormalized}. It's perfectly normal to have mixed feelings.`,
-          "Everyone processes their emotions differently, and however you feel is valid."
-        );
-      }
-      
-      responses.push(
-        "You're not alone in experiencing this. Many people go through similar situations.",
-        "Taking time to express yourself like this is an important step in processing your emotions."
-      );
+      prompt = `As someone who deeply cares about you, I want to respond to your concern about ${target}: "${ventText}". I should express empathy and understanding.`;
       break;
-      
     case 'justification':
-      if (hasNegativeSentiment) {
-        responses.push(
-          `Your feelings toward ${targetNormalized} are completely justified given what you've described.`,
-          "Anyone in your position would likely feel the same way."
-        );
-        
-        if (isLongVent) {
-          responses.push(
-            "The complexity of your situation absolutely warrants these feelings.",
-            "You've clearly thought about this deeply, and your perspective is well-reasoned."
-          );
-        }
-      } else {
-        responses.push(
-          `Your approach to the situation with ${targetNormalized} makes perfect sense.`,
-          "Your reasoning is sound, and your reactions are appropriate given the circumstances."
-        );
-      }
-      
-      responses.push(
-        "Your emotional response is a natural reaction to what you've experienced.",
-        "You have every right to feel this way, and you don't need to justify yourself to anyone."
-      );
+      prompt = `I want to validate your feelings about ${target}: "${ventText}". I should affirm that your feelings are justified and reasonable.`;
       break;
-      
     case 'argument':
-      if (hasNegativeSentiment) {
-        responses.push(
-          `I understand your frustration with ${targetNormalized}, but perhaps there's another perspective to consider.`,
-          "Sometimes our strongest emotions can cloud our view of the complete picture."
-        );
-        
-        if (isLongVent) {
-          responses.push(
-            "You've shared a lot of details about this situation. I wonder if some aspects might look different with some distance.",
-            "In complex situations like this, there are often multiple valid perspectives to consider."
-          );
-        }
-      } else {
-        responses.push(
-          `While your view of ${targetNormalized} makes sense from your perspective, have you considered it from theirs?`,
-          "It can be enlightening to temporarily step into the other person's shoes."
-        );
-      }
-      
-      responses.push(
-        "What would happen if you approached this from a completely different angle?",
-        "Sometimes challenging our initial reactions can lead to surprising insights and growth."
-      );
+      prompt = `I want to offer a different perspective on your concern about ${target}: "${ventText}". I should gently challenge your viewpoint while being respectful.`;
       break;
-      
     default:
-      responses = [
-        "I'm here to listen. Please continue sharing your thoughts.",
-        "Thank you for expressing yourself. Your feelings matter.",
-        "I appreciate your honesty and openness.",
-        "I'm listening attentively to everything you're saying."
-      ];
+      prompt = `Respond with empathy to this message: "${ventText}"`;
   }
   
-  // Add some general concluding responses
-  responses.push(
-    "How are you feeling after expressing this?",
-    "Would it help to explore this topic further?",
-    "Sometimes just putting our thoughts into words can provide clarity."
-  );
+  try {
+    const response = await getAIResponse(prompt);
+    const sentences = splitIntoSentences(response);
+    
+    // Return at least 2 sentences, or the fallback if we couldn't split properly
+    return sentences.length >= 2 ? sentences : [
+      "I understand how you feel.",
+      "Would you like to share more about your experience?"
+    ];
+  } catch (error) {
+    console.error("Error generating AI response:", error);
+    // Return fallback responses
+    return [
+      "I'm here for you.",
+      "Your feelings are valid.",
+      "Would you like to tell me more about this situation?"
+    ];
+  }
+}
+
+// Main function to generate AI responses
+export function generateAIResponses({ ventText, target, mode }: ResponseOptions): string[] {
+  // For immediate rendering, return a few starter responses
+  const fallbackResponses = [
+    "That's wonderful to hear!",
+    " I'm glad you're feeling positive about this.",
+    " Would you like to share more?"
+  ];
   
-  return responses;
+  // Start fetching AI responses in the background
+  generateAIResponse(ventText, target, mode)
+    .then(aiResponses => {
+      // In a real application, you would update state here
+      console.info("AI responses received:", aiResponses);
+      return aiResponses;
+    })
+    .catch(error => {
+      console.error("Failed to get AI responses:", error);
+      return fallbackResponses;
+    });
+  
+  // Meanwhile, return fallback responses for immediate rendering
+  return [
+    `I'm listening to your thoughts about ${target}...`,
+    "I appreciate you sharing this with me.",
+    "Please continue, I'm here for you."
+  ];
 }
