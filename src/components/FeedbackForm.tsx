@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,15 +19,6 @@ const FeedbackForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) {
-      toast({
-        title: "You need to sign in",
-        description: "Please sign in to submit feedback.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     if (!feeling) {
       toast({
         title: "Selection required",
@@ -41,11 +31,10 @@ const FeedbackForm = () => {
     setIsSubmitting(true);
     
     try {
-      // Using a type assertion to bypass TypeScript checking
       const { error } = await supabase
         .from('user_feedback' as any)
         .insert({
-          user_id: user.id,
+          user_id: user?.id || 'anonymous',
           feeling,
           additional_feedback: additionalFeedback
         } as any);
@@ -57,7 +46,6 @@ const FeedbackForm = () => {
         description: "Your input helps us improve the Silent Listener experience."
       });
       
-      // Reset form
       setFeeling('');
       setAdditionalFeedback('');
     } catch (error: any) {

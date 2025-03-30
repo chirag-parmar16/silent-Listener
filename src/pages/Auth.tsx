@@ -30,15 +30,17 @@ const Auth = () => {
 
     try {
       if (isLogin) {
-        const { error } = await signIn(email, password);
-        if (error) throw error;
+        // Since we're removing auth, just navigate directly
+        toast({
+          title: "Welcome back!",
+          description: "You've been successfully signed in.",
+        });
         navigate('/');
       } else {
-        const { error } = await signUp(email, password);
-        if (error) throw error;
+        // Since we're removing auth, just show success message
         toast({
           title: "Account created!",
-          description: "Please check your email to confirm your account.",
+          description: "You've been successfully registered.",
         });
         setIsLogin(true);
       }
