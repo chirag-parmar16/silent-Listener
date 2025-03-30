@@ -51,9 +51,9 @@ const BackgroundParticles = () => {
     
     const animate = () => {
       // Update particle positions
-      const particleElements = document.querySelectorAll('.bg-particle');
+      const allParticleElements = document.querySelectorAll('.bg-particle');
       
-      particleElements.forEach((particle, index) => {
+      allParticleElements.forEach((particle, index) => {
         const p = particles[index];
         p.y -= p.speed;
         
@@ -77,7 +77,8 @@ const BackgroundParticles = () => {
       const mouseX = e.clientX;
       const mouseY = e.clientY;
       
-      particleElements.forEach((particle, index) => {
+      const allParticleElements = document.querySelectorAll('.bg-particle');
+      allParticleElements.forEach((particle, index) => {
         const p = particles[index];
         const particleX = p.x;
         const particleY = p.y;

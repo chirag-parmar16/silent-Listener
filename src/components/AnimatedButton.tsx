@@ -40,24 +40,26 @@ const AnimatedButton = ({
       {...props}
     >
       {children}
-      <style jsx global>{`
-        .ripple {
-          position: absolute;
-          background: rgba(255, 255, 255, 0.3);
-          border-radius: 50%;
-          transform: scale(0);
-          animation: ripple 0.6s linear;
-          pointer-events: none;
-          z-index: 0;
-        }
-        
-        @keyframes ripple {
-          to {
-            transform: scale(4);
-            opacity: 0;
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          .ripple {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+            z-index: 0;
           }
-        }
-      `}</style>
+          
+          @keyframes ripple {
+            to {
+              transform: scale(4);
+              opacity: 0;
+            }
+          }
+        `
+      }} />
     </Button>
   );
 };
