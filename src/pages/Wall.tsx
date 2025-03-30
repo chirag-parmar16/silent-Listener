@@ -26,6 +26,13 @@ const Wall = () => {
       <Header />
       <main className="flex-1 pt-24 pb-16 px-6">
         <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-medium mb-2">Community Wall</h1>
+            <p className="text-muted-foreground">
+              Discover shared experiences and know you're not alone
+            </p>
+          </div>
+          
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="confessions" className="flex items-center gap-2">

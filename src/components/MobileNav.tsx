@@ -1,7 +1,6 @@
 
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle, Info, Heart, X, Menu, Settings } from 'lucide-react';
+import { MessageCircle, Info, Heart, X, Settings } from 'lucide-react';
 
 interface MobileNavProps {
   isOpen: boolean;

@@ -1,20 +1,15 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { MessageCircle, Info, Heart, Settings, Menu, LogIn, LogOut, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { MessageCircle, Info, Heart, Settings, Menu } from 'lucide-react';
 import { useTheme } from '../hooks/use-theme';
-import { useAuth } from '../contexts/AuthContext';
 import MobileNav from './MobileNav';
 import ThemeToggle from './ThemeToggle';
-import { Button } from './ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { theme } = useTheme();
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
   
   useEffect(() => {
     const handleScroll = () => {
@@ -31,15 +26,6 @@ const Header = () => {
   
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
-  };
-
-  const handleAuthClick = async () => {
-    if (user) {
-      await signOut();
-      navigate('/');
-    } else {
-      navigate('/auth');
-    }
   };
   
   return (
@@ -69,32 +55,6 @@ const Header = () => {
               <Settings size={18} /> 
               <span>Settings</span>
             </Link>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={handleAuthClick}
-                  className="flex items-center gap-2"
-                >
-                  {user ? (
-                    <>
-                      <User size={18} />
-                      <span className="hidden lg:inline">Account</span>
-                    </>
-                  ) : (
-                    <>
-                      <LogIn size={18} />
-                      <span className="hidden lg:inline">Sign In</span>
-                    </>
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {user ? 'Manage account' : 'Sign in or create account'}
-              </TooltipContent>
-            </Tooltip>
             
             <ThemeToggle />
           </nav>

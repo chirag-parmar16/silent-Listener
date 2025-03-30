@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import TargetSelector from '@/components/TargetSelector';
 import VentingForm from '@/components/VentingForm';
 import SilentListener from '@/components/SilentListener';
 import MotivationalClosure from '@/components/MotivationalClosure';
-import ConfessionWall from '@/components/ConfessionWall';
 import { ChevronDown } from 'lucide-react';
+
 enum VentStage {
   Welcome,
   TargetSelection,
@@ -14,61 +14,60 @@ enum VentStage {
   Listening,
   Motivation,
 }
+
 const Index = () => {
   const [stage, setStage] = useState<VentStage>(VentStage.Welcome);
   const [selectedTarget, setSelectedTarget] = useState('');
   const [ventText, setVentText] = useState('');
   const [listenerMode, setListenerMode] = useState('sympathy');
+  const ventAreaRef = useRef<HTMLDivElement>(null);
+  
   const handleTargetSelect = (target: string) => {
     setSelectedTarget(target);
     setStage(VentStage.Venting);
-
-    // Remove automatic scrolling behavior
-    // We'll let the user scroll manually
   };
+  
   const handleVentSubmit = (vent: string, mode: string) => {
     setVentText(vent);
     setListenerMode(mode);
     setStage(VentStage.Listening);
-
-    // Remove automatic scrolling behavior
-    // We'll let the user scroll manually
   };
+  
   const handleReset = () => {
     setStage(VentStage.TargetSelection);
     setVentText('');
-
-    // Remove automatic scrolling behavior
-    // We'll let the user scroll manually
+    if (ventAreaRef.current) {
+      ventAreaRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   };
+  
   const scrollToVent = () => {
     setStage(VentStage.TargetSelection);
-
-    // Add a small delay before scrolling to ensure component update
     setTimeout(() => {
-      // Get the target element instead of using window.scrollTo
-      const ventArea = document.getElementById('vent-area');
-      if (ventArea) {
-        ventArea.scrollIntoView({
-          behavior: 'smooth'
-        });
+      if (ventAreaRef.current) {
+        ventAreaRef.current.scrollIntoView({ behavior: 'smooth' });
       }
     }, 100);
   };
+  
   const renderStageContent = () => {
     switch (stage) {
       case VentStage.Welcome:
-        return <div className="min-h-screen flex flex-col">
+        return (
+          <div className="min-h-screen flex flex-col">
             <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-16">
               <div className="space-y-6 max-w-3xl animate-fade-in py-[76px]">
                 <div className="chip bg-primary/10 text-primary mx-auto">Express Without Fear</div>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight">Silent Listener </h1>
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight">Silent Listener</h1>
                 <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto my-[70px]">
                   A safe, anonymous space where you can express your emotions freely without judgment.
                 </p>
                 
                 <div className="pt-6">
-                  <button onClick={scrollToVent} className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-full text-lg transition-all animate-hover">
+                  <button 
+                    onClick={scrollToVent} 
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-full text-lg transition-all animate-hover"
+                  >
                     Start Venting
                   </button>
                 </div>
@@ -197,53 +196,75 @@ const Index = () => {
                   Take the first step toward emotional release and begin your venting journey
                 </p>
                 <div className="pt-4">
-                  <button onClick={scrollToVent} className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-full text-lg transition-all animate-hover">
+                  <button 
+                    onClick={scrollToVent} 
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 rounded-full text-lg transition-all animate-hover"
+                  >
                     Start Venting
                   </button>
                 </div>
               </div>
             </div>
             
-            <div className="py-16 px-6" id="vent-area">
+            <div className="py-16 px-6" ref={ventAreaRef} id="vent-area">
               <div className="max-w-3xl mx-auto">
                 <TargetSelector onSelect={handleTargetSelect} />
               </div>
             </div>
-          </div>;
+          </div>
+        );
       case VentStage.TargetSelection:
-        return <div className="min-h-screen flex flex-col pt-24 py-0">
+        return (
+          <div className="min-h-screen flex flex-col pt-24 py-0" ref={ventAreaRef}>
             <div className="max-w-3xl mx-auto w-full">
               <TargetSelector onSelect={handleTargetSelect} />
             </div>
-          </div>;
+          </div>
+        );
       case VentStage.Venting:
-        return <div className="min-h-screen flex flex-col pt-40 pb-16 px-6">
+        return (
+          <div className="min-h-screen flex flex-col pt-40 pb-16 px-6">
             <div className="max-w-3xl mx-auto w-full">
               <VentingForm target={selectedTarget} onSubmit={handleVentSubmit} onReset={handleReset} />
             </div>
-          </div>;
+          </div>
+        );
       case VentStage.Listening:
-        return <div className="min-h-screen flex flex-col pt-24 pb-16 px-6">
+        return (
+          <div className="min-h-screen flex flex-col pt-24 pb-16 px-6">
             <div className="max-w-3xl mx-auto w-full">
-              <SilentListener ventText={ventText} target={selectedTarget} mode={listenerMode} onComplete={() => setStage(VentStage.Motivation)} onReset={handleReset} />
+              <SilentListener 
+                ventText={ventText} 
+                target={selectedTarget} 
+                mode={listenerMode} 
+                onComplete={() => setStage(VentStage.Motivation)} 
+                onReset={handleReset} 
+              />
             </div>
-          </div>;
+          </div>
+        );
       case VentStage.Motivation:
-        return <div className="min-h-screen flex flex-col pt-24 pb-16 px-6">
+        return (
+          <div className="min-h-screen flex flex-col pt-24 pb-16 px-6">
             <div className="max-w-3xl mx-auto w-full">
               <MotivationalClosure ventText={ventText} target={selectedTarget} onReset={handleReset} />
             </div>
-          </div>;
+          </div>
+        );
       default:
         return null;
     }
   };
-  return <div className="flex flex-col min-h-screen">
+  
+  return (
+    <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-1">
         {renderStageContent()}
       </main>
       <Footer />
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
