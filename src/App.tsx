@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { AuthProvider } from "@/contexts/AuthContext";
+import BackgroundParticles from "@/components/BackgroundParticles";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Wall from "./pages/Wall";
@@ -22,6 +23,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <BackgroundParticles />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
