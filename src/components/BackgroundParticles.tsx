@@ -68,9 +68,9 @@ const BackgroundParticles = () => {
     
     const animate = () => {
       // Update particle positions
-      const allParticleElements = document.querySelectorAll('.bg-particle');
+      const particleElements = document.querySelectorAll('.bg-particle');
       
-      allParticleElements.forEach((particle, index) => {
+      particleElements.forEach((particle, index) => {
         const p = particles[index];
         p.y -= p.speed;
         
@@ -120,7 +120,8 @@ const BackgroundParticles = () => {
     // Handle window resize
     const handleResize = () => {
       // Adjust particles for new window size
-      allParticleElements.forEach((particle, index) => {
+      const particleElements = document.querySelectorAll('.bg-particle');
+      particleElements.forEach((particle, index) => {
         const p = particles[index];
         if (p.x > window.innerWidth) p.x = Math.random() * window.innerWidth;
         if (p.y > window.innerHeight) p.y = Math.random() * window.innerHeight;

@@ -114,6 +114,35 @@
     animation: pulse-bg 15s ease-in-out infinite alternate;
   }
 
+  /* Add a specific light mode animation to the background */
+  .light body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(120deg, 
+                              rgba(var(--primary), 0.03) 0%, 
+                              rgba(var(--accent), 0.02) 50%,
+                              rgba(var(--primary), 0.03) 100%);
+    background-size: 200% 200%;
+    z-index: -1;
+    animation: gradient-shift 15s ease infinite;
+  }
+
+  @keyframes gradient-shift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
   @keyframes pulse-bg {
     0% {
       background-size: 100% 100%;
@@ -146,6 +175,40 @@
 }
 
 @layer utilities {
+  /* Light mode specific interactive elements */
+  .light .glass-effect {
+    @apply bg-white/80 backdrop-blur-md border border-white/40 shadow-lg;
+    transition: all 0.3s ease;
+  }
+  
+  .light .glass-effect:hover {
+    @apply bg-white/90 shadow-xl border-primary/20;
+    transform: translateY(-2px);
+  }
+  
+  /* Enhanced card hover for light mode */
+  .light .card-hover {
+    @apply shadow-sm bg-white/70 backdrop-blur-sm;
+    transition: all 0.3s ease;
+  }
+  
+  .light .card-hover:hover {
+    @apply shadow-lg bg-white/90;
+    transform: translateY(-3px);
+  }
+  
+  /* Light mode specific button effects */
+  .light .btn-hover-effect {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    @apply shadow-sm;
+  }
+  
+  .light .btn-hover-effect:hover {
+    @apply shadow-md;
+  }
+  
   .glass-effect {
     @apply bg-white/70 dark:bg-black/50 backdrop-blur-md border border-white/20 dark:border-white/10;
   }
@@ -321,6 +384,36 @@
   .animated-border:hover::after {
     width: 100%;
   }
+
+  /* Light mode specific animated border */
+  .light .animated-border::after {
+    height: 3px;
+    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)));
+  }
+  
+  /* Light mode specific text hover effect */
+  .light .hover-text-effect {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .light .hover-text-effect::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    transform: scaleX(0);
+    height: 2px;
+    bottom: -2px;
+    left: 0;
+    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)));
+    transform-origin: bottom right;
+    transition: transform 0.3s ease-out;
+  }
+  
+  .light .hover-text-effect:hover::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
+  }
 }
 
 /* Custom Animations */
@@ -364,6 +457,16 @@
   @apply shadow-lg;
 }
 
+/* Light mode specific glass card */
+.light .glass-card {
+  @apply bg-white/70 shadow-md border border-white/30;
+}
+
+.light .glass-card:hover {
+  @apply bg-white/80 shadow-xl border-primary/20;
+  transform: translateY(-5px) scale(1.01);
+}
+
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
@@ -395,6 +498,20 @@ h1, h2, h3, h4, h5, h6 {
 
 .dark .chip {
   @apply bg-secondary/80;
+}
+
+/* Light mode enhancement */
+.light .glass-effect {
+  @apply bg-white/70 shadow-md border border-white/50;
+  transition: all 0.3s ease;
+}
+
+.light .glass-effect:hover {
+  @apply bg-white/80 shadow-lg;
+}
+
+.light .chip {
+  @apply bg-primary/10 text-primary hover:bg-primary/20 transition-all;
 }
 
 /* Better mobile experience */
@@ -443,6 +560,18 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* Light mode shimmer */
+.light .shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0),
+    rgba(0, 0, 0, 0.05),
+    rgba(0, 0, 0, 0)
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
 /* Text animation */
 @keyframes typing {
   from { width: 0 }
@@ -454,6 +583,16 @@ h1, h2, h3, h4, h5, h6 {
   overflow: hidden;
   white-space: nowrap;
   animation: typing 3.5s steps(40, end);
+}
+
+/* Light mode specific animations */
+.light .hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.light .hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* Increase text container size by default on mobile */

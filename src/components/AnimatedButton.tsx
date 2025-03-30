@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useRipple } from '@/hooks/use-ripple';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { useTheme } from '@/hooks/use-theme';
 
 interface AnimatedButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
@@ -21,6 +22,7 @@ const AnimatedButton = ({
   ...props
 }: AnimatedButtonProps) => {
   const { createRipple } = useRipple();
+  const { theme } = useTheme();
   
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     createRipple(e);
@@ -40,6 +42,7 @@ const AnimatedButton = ({
         size={size}
         className={cn(
           'relative overflow-hidden transition-all btn-hover-effect shadow-md', 
+          theme === 'light' ? 'light-button-effect' : '',
           className
         )}
         onClick={handleClick}
@@ -77,6 +80,28 @@ const AnimatedButton = ({
             
             .hover\\:animate-shimmer:hover {
               animation: shimmer 1.5s infinite;
+            }
+            
+            /* Light mode specific effects */
+            .light-button-effect:before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background: linear-gradient(45deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+              transform: translateX(-100%);
+              transition: transform 0.6s;
+              z-index: 0;
+            }
+            
+            .light-button-effect:hover:before {
+              transform: translateX(100%);
+            }
+            
+            .light .ripple {
+              background: rgba(0, 0, 0, 0.1);
             }
           `
         }} />
