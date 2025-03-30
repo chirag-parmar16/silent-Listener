@@ -31,11 +31,27 @@ const AnimatedButton = ({
     }
   };
   
+  // Different animation variants based on theme
+  const motionVariants = {
+    light: {
+      hover: { scale: 1.05, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' },
+      tap: { scale: 0.97 },
+      transition: { type: "spring", stiffness: 400, damping: 17 }
+    },
+    dark: {
+      hover: { scale: 1.05 },
+      tap: { scale: 0.95 },
+      transition: { type: "spring", stiffness: 400, damping: 17 }
+    }
+  };
+  
+  const currentMotion = theme === 'light' ? motionVariants.light : motionVariants.dark;
+  
   return (
     <motion.div
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      whileHover={currentMotion.hover}
+      whileTap={currentMotion.tap}
+      transition={currentMotion.transition}
     >
       <Button
         variant={variant}
@@ -49,12 +65,16 @@ const AnimatedButton = ({
         {...props}
       >
         <span className="relative z-10">{children}</span>
-        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full hover:animate-shimmer z-0" />
+        <span className={cn(
+          "absolute inset-0 -translate-x-full z-0",
+          theme === 'light' 
+            ? "bg-gradient-to-r from-white/5 via-white/40 to-white/5 hover:animate-shimmer" 
+            : "bg-gradient-to-r from-transparent via-white/20 to-transparent hover:animate-shimmer"
+        )} />
         <style dangerouslySetInnerHTML={{
           __html: `
             .ripple {
               position: absolute;
-              background: rgba(255, 255, 255, 0.3);
               border-radius: 50%;
               transform: scale(0);
               animation: ripple 0.6s linear;
@@ -100,8 +120,13 @@ const AnimatedButton = ({
               transform: translateX(100%);
             }
             
+            /* Different ripple effects for different themes */
             .light .ripple {
               background: rgba(0, 0, 0, 0.1);
+            }
+            
+            .dark .ripple {
+              background: rgba(255, 255, 255, 0.3);
             }
           `
         }} />
