@@ -3,13 +3,11 @@ import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Switch } from '@/components/ui/switch';
-import { useTheme } from '@/hooks/use-theme';
-import { Save, Sun, Moon, Volume2, VolumeX } from 'lucide-react';
+import { VolumeX, Volume2, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 
 const Settings = () => {
-  const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   
   // Auto-speak settings
@@ -48,51 +46,6 @@ const Settings = () => {
             </div>
             
             <div className="space-y-8">
-              <div className="glass-card p-6 rounded-xl">
-                <h2 className="text-xl font-medium mb-6">Appearance</h2>
-                
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
-                        <span className="font-medium">Theme</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Choose how Silent Listener looks to you
-                      </p>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                      <button 
-                        onClick={() => setTheme('light')}
-                        className={`p-2 rounded-md transition-colors ${
-                          theme === 'light' ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                        }`}
-                      >
-                        Light
-                      </button>
-                      <button 
-                        onClick={() => setTheme('dark')}
-                        className={`p-2 rounded-md transition-colors ${
-                          theme === 'dark' ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                        }`}
-                      >
-                        Dark
-                      </button>
-                      <button 
-                        onClick={() => setTheme('system')}
-                        className={`p-2 rounded-md transition-colors ${
-                          theme === 'system' ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                        }`}
-                      >
-                        System
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
               <div className="glass-card p-6 rounded-xl">
                 <h2 className="text-xl font-medium mb-6">Accessibility</h2>
                 
